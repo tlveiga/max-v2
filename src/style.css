@@ -1,0 +1,54 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background-color: rgba(187, 234, 236, 0.2);
+  display: flex;
+  justify-content: center;
+  align-content: flex-start;
+  padding-top: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+main {
+  width: 600px;
+  display: flex;
+  flex-flow: column;
+}
+
+label {
+  font-size: 125%;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.container {
+  background-color: rgba(187, 234, 236, 0.5);
+  border-radius: 5px;
+  box-shadow: 3px 3px 5px 2px gray;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+ul {
+  padding: 0;
+  margin: 0;
+  list-style-type: none;
+}
+
+section.info {
+  width: 100%;
+}
+
+section.mqtt {
+  width: 100%;
+}
+
+.two-columns {
+  display: flex;
+}

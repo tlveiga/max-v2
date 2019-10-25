@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title><%= htmlWebpackPlugin.options.title %></title>
+  <style>
+    body[cloak] {
+      display: none;
+    }
+  </style>
+</head>
+
+<body cloak>
+  <header></header>
+  <main>
+    <section class="container info">
+      <ul>
+        <li>
+          <label>Name</label>
+          <div id="name" class="value"></div>
+        </li>
+        <li>
+          <label>Time</label>
+          <div id="time" class="value"></div>
+        </li>
+      </ul>
+    </section>
+    <section class="container mqtt">
+      <ul>
+        <li>
+          <label>Server</label>
+          <div id="mqtt_server" class="value"></div>
+        </li>
+        <li>
+          <label>Topic</label>
+          <div id="mqtt_topic" class="value"></div>
+        </li>
+        <ul>
+          <li>
+            <label>Active</label>
+            <button id="mqtt_active" class="value">Yes</button>
+          </li>
+        </ul>
+      </ul>
+    </section>
+
+    <section class="two-columns wifi">
+      <div class="container">
+      </div>
+      <div class="container"></div>
+    </section>
+  </main>
+  <footer></footer>
+</body>
+
+</html>
