@@ -72,11 +72,45 @@
       </div>
     </section>
 
-    <section class="two-columns wifi">
-      <div class="container wifi_list">
-        <ul id="wifi_list"></ul>
+    <section class="wifi">
+      <div class="container wifi_current">
+        <ul>
+          <li>
+            <label>Status</label>
+            <div class="value" id="wifi_status"> </div>
+          </li>
+          <li>
+            <label>IP</label>
+            <div class="value" id="ip"> </div>
+          </li>
+        </ul>
       </div>
-      <div class="container wifi_details"></div>
+      <div class="two-columns">
+        <div class="container wifi_list">
+          <ul id="wifi_list"></ul>
+          <div class="actions">
+            <button id="refreshWifi">Refresh</button>
+          </div>
+        </div>
+        <div class="container wifi_details">
+          <ul>
+            <li>
+              <label>SSID</label>
+              <div class="value" id="wifi_ssid"> </div>
+            </li>
+            <li>
+              <label>Password</label>
+              <div class="value">
+                <input type="password" id="wifi_password" />
+              </div>
+            </li>
+          </ul>
+          <div class="actions">
+            <button id="connectWifi">Connect</button>
+            <button id="forgetWifi">Forget</button>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
   <footer></footer>
