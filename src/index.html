@@ -6,7 +6,7 @@
   <title><%= htmlWebpackPlugin.options.title %></title>
   <style>
     body[cloak] {
-      display: none;
+      opacity: 0;
     }
   </style>
 </head>
@@ -18,37 +18,65 @@
       <ul>
         <li>
           <label>Name</label>
-          <div id="name" class="value"></div>
+          <div class="value">
+            <input type="text" id="name" />
+          </div>
         </li>
         <li>
-          <label>Time</label>
-          <div id="time" class="value"></div>
+          <label>Current version</label>
+          <div id="version" class="value"></div>
+        </li>
+        <li>
+          <label>Update Server</label>
+          <div class="value">
+            <input type="text" id="updateServer" />
+          </div>
+        </li>
+        <li>
+          <label>Available Version</label>
+          <div id="availableVersion" class="value"></div>
         </li>
       </ul>
+      <div class="actions">
+        <button id="checkFW">Check new version</button>
+        <button id="updateFW">Update Firmware</button>
+        <button id="restartDevive">Restart</button>
+        <button id="saveDevive">Save</button>
+      </div>
     </section>
     <section class="container mqtt">
       <ul>
         <li>
           <label>Server</label>
-          <div id="mqtt_server" class="value"></div>
+          <div class="value">
+            <input type="text" id="mqtt_server" />
+          </div>
         </li>
         <li>
           <label>Topic</label>
-          <div id="mqtt_topic" class="value"></div>
+          <div class="value">
+            <input type="text" id="mqtt_topic" />
+          </div>
         </li>
         <ul>
           <li>
             <label>Active</label>
-            <button id="mqtt_active" class="value">Yes</button>
+            <input type="checkbox" id="mqtt_active" />
           </li>
         </ul>
       </ul>
+      <div class="actions">
+        <button id="reconnectMQTT">Reconnect</button>
+        <button id="testMQTT">Test</button>
+        <button id="saveMQTT">Save</button>
+      </div>
     </section>
 
     <section class="two-columns wifi">
-      <div class="container">
+      <div class="container wifi_list">
+        <ul id="wifi_list"></ul>
       </div>
-      <div class="container"></div>
+      <div class="container wifi_details"></div>
     </section>
   </main>
   <footer></footer>
