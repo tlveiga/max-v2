@@ -4,6 +4,7 @@ var __info = {};
 var __availableFW = {};
 var __mqtt = {};
 var __wifi = {};
+var __selectedSSID = "";
 const emptypassword = "#$%__EMPTY__%$#";
 
 function setElementHtml(name, html) {
@@ -99,29 +100,49 @@ function getMQTT() {
 
 function getWifi() {
   json("/wifi").then(function (json) {
-    var list = document.getElementById("wifi_list");
-    list.innerHTML = "";
     __wifi = json;
-    json.networks.forEach(function (f) {
-      var li = document.createElement("li")
-      list.appendChild(li);
-      li.innerHTML = f.ssid + "(" + f.signal + ")";
-      li.addEventListener("click", function () { selectWifi(f.ssid) });
-    });
+
+    var networks = json.networks || [];
+    loadScannedNetworks(networks);
+    setDisableValue("refreshWifi", false);
+  });
+}
+
+function loadScannedNetworks(networks) {
+  var list = document.getElementById("wifi_list");
+  while (list.firstChild)
+    list.removeChild(list.firstChild);
+
+  networks.sort(function (a, b) { return b.rssi - a.rssi });
+  networks.forEach(function (f) {
+    var li = document.createElement("li")
+    if (__selectedSSID === f.ssid)
+      li.classList.add("selected");
+    list.appendChild(li);
+    li.innerHTML = f.ssid + "(" + f.rssi + ")";
+    li.addEventListener("click", function () { selectWifi(f.ssid) });
   });
 }
 
 function selectWifi(ssid) {
   var network = __wifi.networks.find(function (f) { return f.ssid === ssid; })
-  setElementHtml("wifi_ssid", ssid);
+  __selectedSSID = ssid;
+  loadScannedNetworks(__wifi.networks);
+  setElementValue("wifi_ssid", ssid);
   setElementValue("wifi_password", network.saved ? emptypassword : "");
 
-  var forget = document.getElementById("forgetWifi");
-  if (network.saved)
-    forget.removeAttribute("disabled");
-  else
-    forget.setAttribute("disabled", "disabled");
+  setDisableValue("forgetWifi", !network.saved);
+  setDisableValue("connectWifi", false);
 
+}
+
+function updateStatus() {
+  json("/wifi/status").then(function (json) {
+    setElementHtml("wifi_status", json.status);
+    setElementHtml("ip", json.ip);
+
+    setTimeout(updateStatus, 10000);
+  });
 }
 
 /* Handlers */
@@ -191,24 +212,52 @@ function saveMQTT() {
   });
 }
 function refreshWifi() {
-  console.log("refresh Wifi");
+  json("/wifi/scan").then(function (json) {
+    loadScannedNetworks(json.networks || []);
+  });
 }
 function connectWifi() {
-  console.log("connect Wifi");
+  var ssid = getElementValue("wifi_ssid");
+  var saved = __wifi.networks.find(function (f) { return f.ssid === ssid && f.saved; })
+  var network = {
+    ssid: ssid
+  };
+  if (saved == null)
+    network.password = getElementValue("wifi_password");
+  post(saved ? "/wifi/connect" : "wifi", network).then(function (json) {
+    refreshWifi();
+  });
 }
 function forgetWifi() {
-  console.log("forgetWifi");
+  var ssid = getElementValue("wifi_ssid");
+  var saved = __wifi.networks.find(function (f) { return f.ssid === ssid && f.saved; })
+
+  if (saved) {
+    post("/wifi/forget", { ssid: ssid }).then(function () {
+      refreshWifi();
+    })
+  }
 }
 
 function updateServeKeyUp(evt) {
   setDisableValue("checkFW", evt.target.value.length == 0);
   setDisableValue("updateFW", true);
 }
-
 function mqttServeKeyUp(evt) {
   var disable = evt.target.value.length == 0;
   setDisableValue("reconnectMQTT", disable);
   setDisableValue("testMQTT", disable);
+}
+function wifiSSIDKeyUp(evt) {
+  var disable = evt.target.value.length == 0;
+  setDisableValue("connectWifi", disable);
+  var ssid = getElementValue("wifi_ssid");
+  var saved = __wifi.networks.find(function (f) { return f.ssid === ssid && f.saved; });
+  setDisableValue("forgetWifi", saved ? false : true)
+
+  var password = getElementValue("wifi_password");
+  if (!saved && password === emptypassword)
+    setElementValue("wifi_password", "");
 }
 
 
@@ -228,6 +277,7 @@ document.body.onload = function () {
 
   addEvent("updateServer", "keyup", updateServeKeyUp);
   addEvent("mqtt_server", "keyup", mqttServeKeyUp);
+  addEvent("wifi_ssid", "keyup", wifiSSIDKeyUp);
 
   /* buttons start disabled */
   setDisableValue("checkFW", true);
@@ -244,4 +294,5 @@ document.body.onload = function () {
   getInfo();
   getMQTT();
   getWifi();
+  updateStatus();
 };

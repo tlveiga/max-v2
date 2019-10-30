@@ -102,7 +102,7 @@
       </div>
       <div class="two-columns">
         <div class="container wifi_list">
-          <ul id="wifi_list"></ul>
+          <ul id="wifi_list" class="scanned_networks"></ul>
           <div class="actions flex">
             <div class="grow"></div>
             <button id="refreshWifi">Refresh</button>
@@ -112,7 +112,9 @@
           <ul>
             <li>
               <label>SSID</label>
-              <div class="value" id="wifi_ssid"> </div>
+              <div class="value">
+                <input type="text" id="wifi_ssid" />
+              </div>
             </li>
             <li>
               <label>Password</label>

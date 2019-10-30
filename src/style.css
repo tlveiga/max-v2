@@ -149,7 +149,6 @@ section.info, section.mqtt {
 
 .two-columns .container {
   width: calc(50% - 30px);
-  min-height: 300px;
 }
 
 .up-to-date {
@@ -166,4 +165,36 @@ section.info, section.mqtt {
 
 .mqtt_topics label {
   margin-right: 5px;
+}
+
+.wifi_list {
+  height: 300px;
+}
+
+.scanned_networks {
+  height: calc(100% - 45px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin-bottom: 5px;
+}
+
+.scanned_networks li {
+  cursor: pointer;
+  padding: 5px 10px;
+  position: relative;
+  margin: 0;
+}
+
+.scanned_networks li::after {
+  content: '';
+  position: absolute;
+  left: calc(50% - 50px);
+  bottom: 0;
+  width: 100px;
+  height: 2px;
+  background-color: rgba(0, 0, 0, 0.295);
+}
+
+.scanned_networks li.selected {
+  background-color: aquamarine;
 }
