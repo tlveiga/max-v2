@@ -22,9 +22,13 @@
             <input type="text" id="name" />
           </div>
         </li>
-        <li>
+        <li class="no-input flex">
           <label>Current version</label>
           <div id="version" class="value"></div>
+          <div class="grow"></div>
+          <label>ID</label>
+          <div id="id" class="value"></div>
+          <div class="grow"></div>
         </li>
         <li>
           <label>Update Server</label>
@@ -32,16 +36,21 @@
             <input type="text" id="updateServer" />
           </div>
         </li>
-        <li>
+        <li class="no-input">
           <label>Available Version</label>
           <div id="availableVersion" class="value"></div>
         </li>
+        <li>
+          <label>Update on new version</label>
+          <input type="checkbox" id="autoUpdate" />
+        </li>
       </ul>
-      <div class="actions">
+      <div class="actions flex">
         <button id="checkFW">Check new version</button>
         <button id="updateFW">Update Firmware</button>
-        <button id="restartDevive">Restart</button>
-        <button id="saveDevive">Save</button>
+        <button id="restartDevice">Restart</button>
+        <div class="grow"></div>
+        <button id="saveDevice">Save</button>
       </div>
     </section>
     <section class="container mqtt">
@@ -52,10 +61,15 @@
             <input type="text" id="mqtt_server" />
           </div>
         </li>
-        <li>
-          <label>Topic</label>
+        <li class="flex mqtt_topics">
+          <label>In Topic</label>
           <div class="value">
-            <input type="text" id="mqtt_topic" />
+            <input type="text" id="mqtt_in_topic" />
+          </div>
+          <div class="grow"></div>
+          <label>Out Topic</label>
+          <div class="value">
+            <input type="text" id="mqtt_out_topic" />
           </div>
         </li>
         <ul>
@@ -65,9 +79,10 @@
           </li>
         </ul>
       </ul>
-      <div class="actions">
+      <div class="actions flex">
         <button id="reconnectMQTT">Reconnect</button>
         <button id="testMQTT">Test</button>
+        <div class="grow"></div>
         <button id="saveMQTT">Save</button>
       </div>
     </section>
@@ -88,7 +103,8 @@
       <div class="two-columns">
         <div class="container wifi_list">
           <ul id="wifi_list"></ul>
-          <div class="actions">
+          <div class="actions flex">
+            <div class="grow"></div>
             <button id="refreshWifi">Refresh</button>
           </div>
         </div>
@@ -105,7 +121,8 @@
               </div>
             </li>
           </ul>
-          <div class="actions">
+          <div class="actions flex">
+            <div class="grow"></div>
             <button id="connectWifi">Connect</button>
             <button id="forgetWifi">Forget</button>
           </div>
