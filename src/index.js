@@ -1,6 +1,8 @@
 import './style.css'
 import axios from 'axios';
 
+axios.defaults.baseURL = 'http://192.168.1.114';
+
 var info = {};
 var mqtt = {};
 var wifi = {};
@@ -42,7 +44,7 @@ function setCheckbox(name, value) {
 }
 
 function getInfo() {
-  axios.get("info").then(function (response) {
+  axios.get("/info").then(function (response) {
     if (response.data) {
       info = response.data;
       setElementValue("name", info.name);
@@ -65,7 +67,7 @@ function getMQTT() {
 }
 
 function getWifi() {
-  axios.get("wifi").then(function (response) {
+  axios.get("/wifi").then(function (response) {
     if (response.data) {
       var list = document.getElementById("wifi_list");
       list.innerHTML = "";
@@ -95,6 +97,9 @@ function selectWifi(ssid) {
 
 document.body.onload = function () {
   document.body.removeAttribute("cloak");
+
+  document.getElementById("refreshWifi").addEventListener("click", getWifi);
+
   getInfo();
   getMQTT();
   getWifi();
