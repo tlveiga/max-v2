@@ -2,7 +2,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
-  entry: './src/index.js',
+  entry: './web_src/index.js',
   output: {
     filename: 'main.js',
     path: path.resolve(__dirname, 'data'),
@@ -21,7 +21,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       title: 'MAX',
-      template: 'src/index.html'
+      template: 'web_src/index.html'
     })
   ]
 };
