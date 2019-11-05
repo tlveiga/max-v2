@@ -8,7 +8,7 @@ private:
   char _info_id[8];
   char _info_name[64];
   char _info_update_server[256];
-  uint8_t _info_auto_update;
+  bool _info_auto_update;
 
 public:
   WebConfig();
@@ -17,7 +17,7 @@ public:
   const char *getInfoId();
   const char *getInfoName();
   const char *getUpdateServer();
-  const uint8_t getAutoUpdate();
+  const bool getAutoUpdate();
 
   ~WebConfig();
 };

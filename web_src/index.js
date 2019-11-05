@@ -173,15 +173,16 @@ function restart() {
   post("/restart");
 }
 function saveDeviceInfo() {
-  __info.name = getElementValue("name");
-  if (__info.name.length == 0) {
-    __info.name = __info.code + "-" + __info.id;
-    setElementValue("name", __info.name);
+  var info = {};
+  info.name = getElementValue("name");
+  if (info.name.length == 0) {
+    info.name = info.code + "-" + info.id;
+    setElementValue("name", info.name);
   }
-  __info.update_server = getElementValue("updateServer");
-  __info.auto_update = getCheckbox("autoUpdate");
+  info.update_server = getElementValue("updateServer");
+  info.auto_update = getCheckbox("autoUpdate");
 
-  post("/info/update", __info).then(function (json) {
+  post("/info", info).then(function (json) {
   });
 }
 function reconnectMQTT() {
