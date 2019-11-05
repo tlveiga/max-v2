@@ -10,7 +10,8 @@
 #define MQTTFILE "/mqtt.json"
 #define WIFIFILE "/wifi.json"
 
-#define DEFAULTMQTT "http://tlv-ubuntu.westeurope.cloudapp.azure.com/fw"
+#define DEFAULTUPDATESERVER "http://tlv-ubuntu.westeurope.cloudapp.azure.com/fw"
+#define DEFAULTMQTTSERVER "http://tlv-ubuntu.westeurope.cloudapp.azure.com/fw"
 
 #define MAXJSONFILESIZE 1024
 
