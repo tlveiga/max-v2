@@ -1,0 +1,1 @@
+mkspiffs --page 256 --block 8192 -d 5 --create ./data max_ui_1_0_2.bin

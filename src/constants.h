@@ -6,6 +6,7 @@
 #define FWDATE 20191030
 
 // FILES
+#define UIVERSION "/version.json"
 #define INFOFILE "/info.json"
 #define MQTTFILE "/mqtt.json"
 #define WIFIFILE "/wifi.json"

@@ -5,6 +5,9 @@
 
 class WebConfig {
 private:
+  char _ui_version[16];
+  char _ui_date[12];
+
   char _info_id[8];
   char _info_name[64];
   char _info_update_server[256];
@@ -24,6 +27,9 @@ private:
 public:
   WebConfig();
   void begin(ESP8266WebServer &server);
+
+  const char *getUIVersion();
+  const char *getUIDate();
 
   const char *getInfoId();
   const char *getInfoName();

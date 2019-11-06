@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const VersionFile = require('webpack-version-file');
 
 module.exports = {
   entry: './web_src/index.js',
@@ -22,6 +23,10 @@ module.exports = {
     new HtmlWebpackPlugin({
       title: 'MAX',
       template: 'web_src/index.html'
+    }),
+    new VersionFile({
+      output: './data/version.json',
+      template: 'web_src/version.ejs'
     })
   ]
 };

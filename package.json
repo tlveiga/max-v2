@@ -1,6 +1,6 @@
 {
   "name": "max-v2",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "",
   "main": "webpack.config.js",
   "scripts": {
@@ -22,6 +22,7 @@
     "html-webpack-plugin": "^3.2.0",
     "style-loader": "^1.0.0",
     "webpack": "^4.41.2",
-    "webpack-cli": "^3.3.9"
+    "webpack-cli": "^3.3.9",
+    "webpack-version-file": "^0.1.5"
   }
 }

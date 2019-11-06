@@ -13,12 +13,6 @@
 ESP8266WebServer server(80);
 WebConfig setupServer;
 
-/* Config variables */
-char _info_id[8];
-char _info_name[64];
-char _info_update_server[256];
-uint8 _info_auto_update;
-
 void setup() {
   Serial.begin(115200);
   Serial.println("Booting...");
@@ -54,5 +48,6 @@ void setup() {
     delay(500);
     ESP.restart();
   });
+}
 
-  void loop() { server.handleClient(); }
+void loop() { server.handleClient(); }

@@ -23,8 +23,11 @@
           </div>
         </li>
         <li class="no-input flex">
-          <label>Current version</label>
-          <div id="version" class="value"></div>
+          <label>FW version</label>
+          <div id="fw_version" class="value"></div>
+          <div class="grow"></div>
+          <label>UI version</label>
+          <div id="ui_version" class="value"></div>
           <div class="grow"></div>
           <label>ID</label>
           <div id="id" class="value"></div>
@@ -37,8 +40,12 @@
           </div>
         </li>
         <li class="no-input">
-          <label>Available Version</label>
-          <div id="availableVersion" class="value"></div>
+          <label>Available Firmware Version</label>
+          <div id="availableFWVersion" class="value"></div>
+        </li>
+        <li class="no-input">
+          <label>Available User Interface Version</label>
+          <div id="availableUIVersion" class="value"></div>
         </li>
         <li>
           <label>Update on new version</label>
@@ -46,8 +53,8 @@
         </li>
       </ul>
       <div class="actions flex">
-        <button id="checkFW">Check new version</button>
-        <button id="updateFW">Update Firmware</button>
+        <button id="checkUpdate">Check new version</button>
+        <button id="update">Update Firmware</button>
         <button id="restartDevice">Restart</button>
         <div class="grow"></div>
         <button id="saveDevice">Save</button>
@@ -132,7 +139,10 @@
       </div>
     </section>
   </main>
-  <footer></footer>
+  <footer>
+    <div class="ping" id="ping">
+    </div>
+  </footer>
 </body>
 
 </html>

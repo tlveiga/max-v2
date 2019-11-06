@@ -1,7 +1,7 @@
 import './style.css'
 
 var __info = {};
-var __availableFW = {};
+var __newVersion = {};
 var __mqtt = {};
 var __wifi = {};
 var __selectedSSID = "";
@@ -67,14 +67,15 @@ function getInfo() {
     __info = json;
     setElementValue("name", json.name);
     setElementHtml("id", json.id);
-    setElementHtml("version", json.fw_version);
+    setElementHtml("fw_version", json.fw_version);
+    setElementHtml("ui_version", json.ui_version);
     setElementValue("updateServer", json.update_server);
     setCheckbox("autoUpdate", json.auto_update);
 
     setDisableValue("saveDevice", false);
     setDisableValue("restartDevice", false);
     if (json.update_server && json.update_server.length) {
-      setDisableValue("checkFW", false);
+      setDisableValue("checkUpdate", false);
       checkNewVersion();
     }
   }).catch(function (err) {
@@ -145,6 +146,45 @@ function updateStatus() {
   });
 }
 
+function setUpdateClass(id, hasupdate) {
+  var el = document.getElementById(id);
+  el.classList.remove(hasupdate ? "up-to-date" : "new-version");
+  el.classList.add(hasupdate ? "new-version" : "up-to-date");
+}
+
+function createVersionUrl(name, type, ver) {
+  var parts = [
+    name,
+    type,
+    ver.replace(/\./g, "_")
+  ]
+  return parts.join("_").concat(".bin")
+
+
+}
+
+function ping() {
+  new Promise(function (res, rej) {
+    var tm = setTimeout(rej, 1000);
+    fetch("/ping").then(function (response) {
+      clearTimeout(tm);
+      if (response.status === 200)
+        res();
+      else
+        rej();
+    }).catch(function () {
+      clearTimeout(tm);
+      rej();
+    });
+  }).then(function () {
+    document.getElementById("ping").setAttribute("status", "online");
+    setTimeout(ping, 3000);
+  }, function () {
+    document.getElementById("ping").setAttribute("status", "offline");
+    setTimeout(ping, 3000);
+  });
+}
+
 /* Handlers */
 
 function checkNewVersion() {
@@ -153,21 +193,32 @@ function checkNewVersion() {
     url += "/";
   url += __info.code + ".json";
   json(url).then(function (json) {
-    __availableFW = json;
-    setElementHtml("availableVersion", json.version);
-    var el = document.getElementById("version");
-    var hasnewversion = __info.fw_date < json.date;
-    el.classList.remove(hasnewversion ? "up-to-date" : "new-version");
-    el.classList.add(hasnewversion ? "new-version" : "up-to-date");
-    setDisableValue("updateFW", !hasnewversion);
+    __newVersion = json;
+    setElementHtml("availableFWVersion", json.fw_version);
+    setElementHtml("availableUIVersion", json.ui_version);
+
+    var hasfwupdate = __info.fw_date < json.fw_date;
+    var hasuiupdate = __info.ui_date < json.ui_date;
+    setUpdateClass("fw_version", hasfwupdate);
+    setUpdateClass("ui_version", hasuiupdate);
+    setDisableValue("update", !hasfwupdate && !hasuiupdate);
   });
 }
 function updateFirmware() {
+  var hasfwupdate = __info.fw_date < __newVersion.fw_date;
+  var hasuiupdate = __info.ui_date < __newVersion.ui_date;
+
+  var request = {};
   var url = __info.update_server;
   if (url.substr(-1) != "/")
     url += "/";
-  url += __info.code + ".bin";
-  post("/update", { file: url })
+
+  if (hasfwupdate)
+    request.fw = url.concat(createVersionUrl(__info.code, "fw", __newVersion.fw_version));
+  if (hasuiupdate)
+    request.ui = url.concat(createVersionUrl(__info.code, "ui", __newVersion.ui_version));
+
+  post("/update", request);
 }
 function restart() {
   post("/restart");
@@ -241,8 +292,8 @@ function forgetWifi() {
 }
 
 function updateServeKeyUp(evt) {
-  setDisableValue("checkFW", evt.target.value.length == 0);
-  setDisableValue("updateFW", true);
+  setDisableValue("checkUpdate", evt.target.value.length == 0);
+  setDisableValue("update", true);
 }
 function mqttServeKeyUp(evt) {
   var disable = evt.target.value.length == 0;
@@ -264,9 +315,10 @@ function wifiSSIDKeyUp(evt) {
 
 document.body.onload = function () {
   document.body.removeAttribute("cloak");
+  ping();
 
-  addEvent("checkFW", "click", checkNewVersion);
-  addEvent("updateFW", "click", updateFirmware);
+  addEvent("checkUpdate", "click", checkNewVersion);
+  addEvent("update", "click", updateFirmware);
   addEvent("restartDevice", "click", restart);
   addEvent("saveDevice", "click", saveDeviceInfo);
   addEvent("reconnectMQTT", "click", reconnectMQTT);
@@ -281,8 +333,8 @@ document.body.onload = function () {
   addEvent("wifi_ssid", "keyup", wifiSSIDKeyUp);
 
   /* buttons start disabled */
-  setDisableValue("checkFW", true);
-  setDisableValue("updateFW", true);
+  setDisableValue("checkUpdate", true);
+  setDisableValue("update", true);
   setDisableValue("restartDevice", true);
   setDisableValue("saveDevice", true);
   setDisableValue("reconnectMQTT", true);

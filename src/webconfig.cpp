@@ -7,6 +7,9 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
+#include <ESP8266HTTPClient.h>
+#include <ESP8266httpUpdate.h>
+
 WebConfig::WebConfig() {}
 
 void WebConfig::begin(ESP8266WebServer &server) {
@@ -20,6 +23,34 @@ void WebConfig::begin(ESP8266WebServer &server) {
   beginMQTT(server);
   beginStatus(server);
   beginWifi(server);
+
+  server.on("/ping", HTTP_GET,
+            [&]() { server.send(200, "text/pain", "pong"); });
+
+  server.on("/update", HTTP_POST, [&]() {
+    Serial.println("Post /update");
+    const size_t capacity = JSON_OBJECT_SIZE(1) + 512;
+    DynamicJsonDocument doc(capacity);
+    deserializeJson(doc, server.arg("plain").c_str());
+
+    const char *fw = doc["fw"].as<const char *>();
+    const char *ui = doc["ui"].as<const char *>();
+
+    server.send(200, "application/json", "{\"result\": \"updating\"}");
+
+    WiFiClient client;
+    if (ui != NULL) {
+      t_httpUpdate_return ret = ESPhttpUpdate.updateSpiffs(client, ui);
+      if (ret == HTTP_UPDATE_OK) {
+        Serial.println("SPIFFS success");
+      } else {
+        Serial.println("SPIFFS failed");
+      }
+      Serial.println("Restarting");
+      delay(100);
+      ESP.restart();
+    }
+  });
 
   /* Upload SPIFFS */
   server.on("/web-interface-upload", HTTP_GET, [&]() {
@@ -56,6 +87,9 @@ void WebConfig::begin(ESP8266WebServer &server) {
                   if (!Update.end(true)) {
                     Serial.println("Update.end failed!");
                   }
+                  Serial.println("Restarting");
+                  delay(100);
+                  ESP.restart();
                 }
               }
             });
@@ -79,9 +113,19 @@ void WebConfig::begin(ESP8266WebServer &server) {
 }
 
 void WebConfig::beginInfo(ESP8266WebServer &server) {
+
   /* Reading config values or using defaults */
   const size_t capacity = JSON_OBJECT_SIZE(7) + 2048; // change to real values
   DynamicJsonDocument doc(capacity);
+
+  if (readJSONFile(UIVERSION, doc)) {
+    sprintf(_ui_version, doc["version"].as<const char *>());
+    sprintf(_ui_date, doc["date"].as<const char *>());
+  } else {
+    sprintf(_ui_version, "%s\0", "none");
+    sprintf(_ui_date, "%s\0", "0");
+  }
+
   if (readJSONFile(INFOFILE, doc)) {
     sprintf(_info_name, doc["name"].as<const char *>());
     sprintf(_info_update_server, doc["update_server"].as<const char *>());
@@ -99,10 +143,12 @@ void WebConfig::beginInfo(ESP8266WebServer &server) {
     sprintf(buf,
             "{\"id\":\"%s\",\"code\":\"%s\",\"name\":\"%s\",\"fw_version\":"
             "\"%"
-            "s\",\"fw_date\":%d,\"update_server\":\"%s\",\"auto_update\":%s}",
-            _info_id, FWCODE, _info_name, FWVERSION, FWDATE,
-            _info_update_server, _info_auto_update ? "true" : "false");
-    server.send(200, "text/plain", buf);
+            "s\",\"fw_date\":%d,\"ui_version\":\"%s\",\"ui_date\":%s, "
+            "\"update_server\":\"%s\",\"auto_update\":%s}",
+            _info_id, FWCODE, _info_name, FWVERSION, FWDATE, _ui_version,
+            _ui_date, _info_update_server,
+            _info_auto_update ? "true" : "false");
+    server.send(200, "application/json", buf);
     free(buf);
   });
 
@@ -111,6 +157,10 @@ void WebConfig::beginInfo(ESP8266WebServer &server) {
     const size_t capacity = JSON_OBJECT_SIZE(7) + 2048;
     DynamicJsonDocument doc(capacity);
     deserializeJson(doc, server.arg("plain").c_str());
+
+    sprintf(_info_name, doc["name"].as<const char *>());
+    sprintf(_info_update_server, doc["update_server"].as<const char *>());
+    _info_auto_update = doc["auto_update"].as<bool>();
 
     writeJSONFile(INFOFILE, doc);
     server.send(200, "application/json", "{\"result\": \"ok\"}");
@@ -150,12 +200,20 @@ void WebConfig::beginMQTT(ESP8266WebServer &server) {
     DynamicJsonDocument doc(capacity);
     deserializeJson(doc, server.arg("plain").c_str());
 
+    sprintf(_mqtt_server, doc["server"].as<const char *>());
+    sprintf(_mqtt_in_topic, doc["in_topic"].as<const char *>());
+    sprintf(_mqtt_out_topic, doc["out_topic"].as<const char *>());
+    _mqtt_active = doc["active"].as<bool>();
+
     writeJSONFile(MQTTFILE, doc);
     server.send(200, "application/json", "{\"result\": \"ok\"}");
   });
 }
 void WebConfig::beginStatus(ESP8266WebServer &server) {}
 void WebConfig::beginWifi(ESP8266WebServer &server) {}
+
+const char *WebConfig::getUIVersion() { return _ui_version; };
+const char *WebConfig::getUIDate() { return _ui_date; };
 
 const char *WebConfig::getInfoId() { return _info_id; };
 const char *WebConfig::getInfoName() { return _info_name; };
