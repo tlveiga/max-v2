@@ -15,7 +15,8 @@ body {
   justify-content: center;
   align-content: flex-start;
   padding-top: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: monospace;
+  text-transform: uppercase;
 }
 
 main {
@@ -34,7 +35,8 @@ main {
 label {
   font-size: 125%;
   font-weight: bold;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: monospace;
+  text-transform: uppercase;
 }
 
 label.no-input {
@@ -87,10 +89,11 @@ button {
   border: none;
   background-color: rgb(139, 139, 139);
   color: rgb(0, 0, 0);
-  font-family: 'Courier New', Courier, monospace;
+  font-family: monospace;
+  text-transform: uppercase;
   font-size: 14px;
   font-weight: bolder;
-  padding: 10px 20px;
+  padding: 3px 6px;
   /* border-radius: 3px; */
   border: groove 2px;
   transition: background-color 0.4s ease-in-out, color 0.2s ease-in-out 0.2s;
@@ -215,7 +218,8 @@ section.info, section.mqtt {
   display: none;
   justify-content: center;
   align-items: center;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: monospace;
+  text-transform: uppercase;
   font-size: 14px;
   font-weight: bolder;
 }
