@@ -22,21 +22,18 @@
 //   return true;
 // }
 
-bool readJSONFile(const char *filename, DynamicJsonDocument &json)
-{
+bool readJSONFile(const char *filename, DynamicJsonDocument &json) {
   Serial.print(F("Loading file: "));
   Serial.println(filename);
   File file = SPIFFS.open(filename, "r");
-  if (!file)
-  {
+  if (!file) {
     Serial.println(F("failed: open file"));
     return false;
   }
 
   size_t size = file.size();
 
-  if (size > MAXJSONFILESIZE)
-  {
+  if (size > MAXJSONFILESIZE) {
     Serial.println(F("failed: file too big"));
     file.close();
     return false;
@@ -48,11 +45,11 @@ bool readJSONFile(const char *filename, DynamicJsonDocument &json)
   char *buf = (char *)malloc(sizeof(char) * (size + 1));
   file.readBytes(buf, size);
   buf[size] = 0;
-  DeserializationError error = deserializeJson(json, (const char *)buf); // the cast forces ArduinoJson to make a copy
+  DeserializationError error = deserializeJson(
+      json, (const char *)buf); // the cast forces ArduinoJson to make a copy
   free(buf);
   file.close();
-  if (error)
-  {
+  if (error) {
     Serial.println(F("failed: deserializeJson"));
     Serial.println(error.c_str());
     return false;
@@ -60,14 +57,12 @@ bool readJSONFile(const char *filename, DynamicJsonDocument &json)
   return true;
 };
 
-bool writeJSONFile(const char *filename, const DynamicJsonDocument json)
-{
+bool writeJSONFile(const char *filename, const DynamicJsonDocument json) {
   Serial.print(F("Saving file: "));
   Serial.println(filename);
 
   File file = SPIFFS.open(filename, "w");
-  if (!file)
-  {
+  if (!file) {
     Serial.println(F("failed: creating file"));
     return false;
   }
@@ -80,3 +75,11 @@ bool writeJSONFile(const char *filename, const DynamicJsonDocument json)
 
   return false;
 };
+
+bool readJSONFromSPI(uint32_t addr, uint32_t size, DynamicJsonDocument &json) {
+  return false;
+}
+bool writeJSONToSPI(uint32_t addr, uint32_t size,
+                    const DynamicJsonDocument json) {
+  return false;
+}

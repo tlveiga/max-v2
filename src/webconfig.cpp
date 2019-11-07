@@ -10,6 +10,8 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
 
+#include <spi_flash.h>
+
 WebConfig::WebConfig() {}
 
 void WebConfig::begin(ESP8266WebServer &server) {
@@ -24,8 +26,25 @@ void WebConfig::begin(ESP8266WebServer &server) {
   beginStatus(server);
   beginWifi(server);
 
-  server.on("/ping", HTTP_GET,
-            [&]() { server.send(200, "text/pain", "pong"); });
+  server.on("/r_spiffs", HTTP_GET, [&]() {
+    uint32_t val = 5;
+    Serial.println(val);
+    Serial.println(spi_flash_read(0x8c000, &val, sizeof(uint32_t)));
+    char buf[64];
+    sprintf(buf, "0x%x\0", val);
+    Serial.println(val);
+    server.send(200, "text/plain", buf);
+  });
+
+  server.on("/w_spiffs", HTTP_GET, [&]() {
+    uint32_t val = 10;
+    Serial.println(val);
+    Serial.println(spi_flash_write(0x8c000, &val, sizeof(uint32_t)));
+    Serial.println(val);
+    server.send(200);
+  });
+
+  server.on("/ping", HTTP_GET, [&]() { server.send(200); });
 
   server.on("/update", HTTP_POST, [&]() {
     Serial.println("Post /update");
