@@ -1,20 +1,13 @@
 #include "webconfig.h"
 #include "constants.h"
-#include <FS.h>
 
 #include "utils.h"
-
-#include <Arduino.h>
 #include <ArduinoJson.h>
 
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
 
-<<<<<<< HEAD
 #include "progmem.h"
-=======
-#include <spi_flash.h>
->>>>>>> 3bc855a2712c7021fb54f572acd3b9275a327e3d
 
 WebConfig::WebConfig() {}
 
@@ -24,6 +17,8 @@ void WebConfig::begin(ESP8266WebServer &server) {
 
   server.serveStatic("/", SPIFFS, "/index.html");
   server.serveStatic("/main.js", SPIFFS, "/main.js");
+
+  setupServer(server);
 
   beginInfo(server);
   beginMQTT(server);
@@ -76,9 +71,6 @@ void WebConfig::begin(ESP8266WebServer &server) {
   });
 
   /* Upload SPIFFS */
-  server.on("/web-interface-upload", HTTP_GET, [&]() {
-    server.send_P(200, "text/html", web_update_post);
-  });
 
   server.on("/web-interface-upload", HTTP_POST,
             [&]() {
@@ -88,27 +80,30 @@ void WebConfig::begin(ESP8266WebServer &server) {
             [&]() {
               HTTPUpload &upload = server.upload();
               if (upload.status == UPLOAD_FILE_START) {
-                FSInfo fs_info;
-                SPIFFS.info(fs_info);
-
-                if (!Update.begin(fs_info.totalBytes, U_SPIFFS, -1, 0)) {
-                  Serial.println("Update.begin failed!");
-                  _validSPIFFSUpdate = false;
-                } else {
-                  _validSPIFFSUpdate = true;
+                String filename = server.arg("filename");
+                if (!filename.startsWith("/")) {
+                  filename = "/" + filename;
                 }
+                _uploadFile = SPIFFS.open(filename, "w");
+
+                if (_uploadFile) {
+                  Serial.println("upload begin started!");
+                  _validSPIFFSUpdate = true;
+                } else {
+                  Serial.println("upload begin failed!");
+                  _validSPIFFSUpdate = false;
+                }
+
+                filename = String();
               } else if (upload.status == UPLOAD_FILE_WRITE) {
-                if (_validSPIFFSUpdate) {
-                  Update.write(upload.buf, upload.currentSize);
+                if (_uploadFile) {
+                  _uploadFile.write(upload.buf, upload.currentSize);
                 }
               } else if (upload.status == UPLOAD_FILE_END) {
-                if (_validSPIFFSUpdate) {
-                  if (!Update.end(true)) {
-                    Serial.println("Update.end failed!");
-                  }
-                  Serial.println("Restarting");
-                  delay(100);
-                  ESP.restart();
+                if (_uploadFile) {
+                  _uploadFile.close();
+                  Serial.print("handleFileUpload Size: ");
+                  Serial.println(upload.totalSize);
                 }
               }
             });

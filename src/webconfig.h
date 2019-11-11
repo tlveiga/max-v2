@@ -2,6 +2,7 @@
 #define __WEBCONFIG_H__
 
 #include <ESP8266WebServer.h>
+#include <FS.h>
 
 class WebConfig {
 private:
@@ -18,6 +19,7 @@ private:
   bool _mqtt_active;
 
   bool _validSPIFFSUpdate;
+  File _uploadFile;
 
   void beginInfo(ESP8266WebServer &server);
   void beginMQTT(ESP8266WebServer &server);
