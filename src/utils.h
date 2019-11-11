@@ -6,4 +6,8 @@
 bool readJSONFile(const char *filename, DynamicJsonDocument &json);
 bool writeJSONFile(const char *filename, const DynamicJsonDocument json);
 
+bool readJSONFromSPI(uint32_t addr, uint32_t size, DynamicJsonDocument &json);
+bool writeJSONToSPI(uint32_t addr, uint32_t size,
+                    const DynamicJsonDocument json);
+
 #endif
