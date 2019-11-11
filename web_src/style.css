@@ -62,7 +62,7 @@ label.no-input {
 }
 
 .value input[type="text"], .value input[type="password"] {
-  width: calc(100% - 10px);
+  width: calc(100% - 16px);
   padding: 3px;
   /* height: 100%; */
   /* background: rgba(187, 234, 236, 0.9); */
