@@ -10,6 +10,8 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
 
+#include "progmem.h"
+
 WebConfig::WebConfig() {}
 
 void WebConfig::begin(ESP8266WebServer &server) {
@@ -54,11 +56,7 @@ void WebConfig::begin(ESP8266WebServer &server) {
 
   /* Upload SPIFFS */
   server.on("/web-interface-upload", HTTP_GET, [&]() {
-    server.send(200, "text/html",
-                "<html><body><form method=\"post\" "
-                "enctype=\"multipart/form-data\"><input type=\"file\" "
-                "name=\"name\"><input class=\"button\" type=\"submit\" "
-                "value=\"Upload\"></form></html>");
+    server.send_P(200, "text/html", web_update_post);
   });
 
   server.on("/web-interface-upload", HTTP_POST,
