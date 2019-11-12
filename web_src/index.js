@@ -102,7 +102,6 @@ function getMQTT() {
 function getWifi() {
   json("/wifi").then(function (json) {
     __wifi = json;
-
     var networks = json.networks || [];
     loadScannedNetworks(networks);
     setDisableValue("refreshWifi", false);
@@ -119,8 +118,13 @@ function loadScannedNetworks(networks) {
     var li = document.createElement("li")
     if (__selectedSSID === f.ssid)
       li.classList.add("selected");
+    li.classList.add(f.open ? "open" : "closed");
     list.appendChild(li);
-    li.innerHTML = f.ssid + "(" + f.rssi + ")";
+    var html = "";
+    if (f.saved)
+      html += "&#8226 ­"
+    html += f.ssid + " (" + f.rssi + ")";
+    li.innerHTML = html;
     li.addEventListener("click", function () { selectWifi(f.ssid) });
   });
 }
@@ -264,7 +268,8 @@ function saveMQTT() {
   });
 }
 function refreshWifi() {
-  json("/wifi/scan").then(function (json) {
+  json("/wifi").then(function (json) {
+    __wifi = json;
     loadScannedNetworks(json.networks || []);
   });
 }
@@ -285,6 +290,7 @@ function forgetWifi() {
   var saved = __wifi.networks.find(function (f) { return f.ssid === ssid && f.saved; })
 
   if (saved) {
+    setDisableValue("forgetWifi", true);
     post("/wifi/forget", { ssid: ssid }).then(function () {
       refreshWifi();
     })

@@ -4,15 +4,15 @@
   <form method="post" enctype="multipart/form-data" id="form">
     <h1>Upload files</h1>
     <select name="filename" id="select">
-      <option value="index.html">index</option>
-      <option value="main.js">script</option>
+      <option value="index">index</option>
+      <option value="main">script</option>
     </select>
     <input type="file" name="file">
     <input class="button" type="submit" value="Upload">
   </form>
   <script>
     function changeAction() {
-      document.getElementById("form").setAttribute("action", "web-interface-upload?file=" + document.getElementById("select").value);
+      document.getElementById("form").setAttribute("action", "web-interface-upload/" + document.getElementById("select").value);
     }
 
     document.getElementById("select").addEventListener("change", changeAction);

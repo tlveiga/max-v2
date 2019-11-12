@@ -25,11 +25,12 @@ getFiles(root).forEach(function (f) {
   thisfile.len = 0;
   thisfile.useext = path.basename(f).indexOf("NOEXT_") < 0;
   thisfile.post = path.basename(f).indexOf("POST_") >= 0;
+  thisfile.nohandler = path.basename(f).indexOf("NOHANDLER_") >= 0;
   thisfile.extention = path.extname(f);
   thisfile.variable = path.basename(f).replace(/[\-\+\.]/g, "_");
   thisfile.filename = thisfile.useext ? path.basename(f) : path.basename(f, thisfile.extention);
 
-  thisfile.filename = thisfile.filename.replace("NOEXT_", "").replace("POST_", "")
+  thisfile.filename = thisfile.filename.replace("NOEXT_", "").replace("POST_", "").replace("NOHANDLER_", "");
 
   thisfile.data = "const char " + thisfile.variable + "[] PROGMEM = {";
   var fd = fs.openSync(f, "r");
@@ -52,6 +53,7 @@ filedata.forEach(function (f) {
 
 fs.writeSync(outfd, "// Register server\n");
 filedata.forEach(function (f) {
+  if (f.nohandler) return;
   fs.writeSync(outfd, "void handle_" + f.variable + "(ESP8266WebServer &server){\n");
   fs.writeSync(outfd, "  server.setContentLength(" + f.len + ");\n")
   fs.writeSync(outfd, "  server.send_P(200, PSTR(\"");
@@ -76,6 +78,7 @@ filedata.forEach(function (f) {
 
 fs.writeSync(outfd, "void setupServer(ESP8266WebServer &server) {\n");
 filedata.forEach(function (f) {
+  if (f.nohandler) return;
   let filename = f.filename.indexOf("NOEXT_") == 0 ? f.variable : f.filename;
   fs.writeSync(outfd, "  server.on(\"/" + filename + "\", " + (f.post ? "HTTP_POST" : "HTTP_GET") + ", [&]() { handle_" + f.variable + "(server); });\n");
 });

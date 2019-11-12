@@ -3,6 +3,7 @@
 
 #include <ESP8266WebServer.h>
 #include <FS.h>
+#include <map>
 
 class WebConfig {
 private:
@@ -18,6 +19,8 @@ private:
   char _mqtt_out_topic[256];
   bool _mqtt_active;
 
+  std::map<String, String> _wifi_networks;
+
   bool _validSPIFFSUpdate;
   File _uploadFile;
 
@@ -25,6 +28,9 @@ private:
   void beginMQTT(ESP8266WebServer &server);
   void beginStatus(ESP8266WebServer &server);
   void beginWifi(ESP8266WebServer &server);
+
+  void handleFileUpload(const char *filename, ESP8266WebServer &server);
+  void handleUploadResult(ESP8266WebServer &server);
 
 public:
   WebConfig();

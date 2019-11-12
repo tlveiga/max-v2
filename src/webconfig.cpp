@@ -25,89 +25,17 @@ void WebConfig::begin(ESP8266WebServer &server) {
   beginStatus(server);
   beginWifi(server);
 
-  server.on("/r_spiffs", HTTP_GET, [&]() {
-    uint32_t val = 5;
-    Serial.println(val);
-    Serial.println(spi_flash_read(0x8c000, &val, sizeof(uint32_t)));
-    char buf[64];
-    sprintf(buf, "0x%x\0", val);
-    Serial.println(val);
-    server.send(200, "text/plain", buf);
-  });
-
-  server.on("/w_spiffs", HTTP_GET, [&]() {
-    uint32_t val = 10;
-    Serial.println(val);
-    Serial.println(spi_flash_write(0x8c000, &val, sizeof(uint32_t)));
-    Serial.println(val);
-    server.send(200);
-  });
-
   server.on("/ping", HTTP_GET, [&]() { server.send(200); });
 
-  server.on("/update", HTTP_POST, [&]() {
-    Serial.println("Post /update");
-    const size_t capacity = JSON_OBJECT_SIZE(1) + 512;
-    DynamicJsonDocument doc(capacity);
-    deserializeJson(doc, server.arg("plain").c_str());
+  /* Web interface uploads */
+  server.on("/web-interface-upload/index", HTTP_POST,
+            [&]() { handleUploadResult(server); },
+            [&]() { handleFileUpload("/index.html", server); });
 
-    const char *fw = doc["fw"].as<const char *>();
-    const char *ui = doc["ui"].as<const char *>();
-
-    server.send(200, "application/json", "{\"result\": \"updating\"}");
-
-    WiFiClient client;
-    if (ui != NULL) {
-      t_httpUpdate_return ret = ESPhttpUpdate.updateSpiffs(client, ui);
-      if (ret == HTTP_UPDATE_OK) {
-        Serial.println("SPIFFS success");
-      } else {
-        Serial.println("SPIFFS failed");
-      }
-      Serial.println("Restarting");
-      delay(100);
-      ESP.restart();
-    }
-  });
-
-  /* Upload SPIFFS */
-
-  server.on("/web-interface-upload", HTTP_POST,
-            [&]() {
-              Serial.println("uploaded");
-              server.send(200, "text/plain", _validSPIFFSUpdate ? "OK" : "NOK");
-            },
-            [&]() {
-              HTTPUpload &upload = server.upload();
-              if (upload.status == UPLOAD_FILE_START) {
-                String filename = server.arg("filename");
-                if (!filename.startsWith("/")) {
-                  filename = "/" + filename;
-                }
-                _uploadFile = SPIFFS.open(filename, "w");
-
-                if (_uploadFile) {
-                  Serial.println("upload begin started!");
-                  _validSPIFFSUpdate = true;
-                } else {
-                  Serial.println("upload begin failed!");
-                  _validSPIFFSUpdate = false;
-                }
-
-                filename = String();
-              } else if (upload.status == UPLOAD_FILE_WRITE) {
-                if (_uploadFile) {
-                  _uploadFile.write(upload.buf, upload.currentSize);
-                }
-              } else if (upload.status == UPLOAD_FILE_END) {
-                if (_uploadFile) {
-                  _uploadFile.close();
-                  Serial.print("handleFileUpload Size: ");
-                  Serial.println(upload.totalSize);
-                }
-              }
-            });
-  /* END Upload SPIFFS */
+  server.on("/web-interface-upload/main", HTTP_POST,
+            [&]() { handleUploadResult(server); },
+            [&]() { handleFileUpload("/main.js", server); });
+  /* END Web interface uploads */
 
   server.on("/test", HTTP_GET, [&]() {
     FSInfo fs_info;
@@ -223,8 +151,100 @@ void WebConfig::beginMQTT(ESP8266WebServer &server) {
     server.send(200, "application/json", "{\"result\": \"ok\"}");
   });
 }
+
+void WebConfig::handleFileUpload(const char *filename,
+                                 ESP8266WebServer &server) {
+  HTTPUpload &upload = server.upload();
+  if (upload.status == UPLOAD_FILE_START) {
+    String path = String(filename);
+    if (!path.startsWith("/")) {
+      path = "/" + path;
+    }
+    _uploadFile = SPIFFS.open(path, "w");
+
+    if (_uploadFile) {
+      Serial.println("upload begin started!");
+      _validSPIFFSUpdate = true;
+    } else {
+      Serial.println("upload begin failed!");
+      _validSPIFFSUpdate = false;
+    }
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (_uploadFile) {
+      _uploadFile.write(upload.buf, upload.currentSize);
+    }
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (_uploadFile) {
+      _uploadFile.close();
+      Serial.print("handleFileUpload Size: ");
+      Serial.println(upload.totalSize);
+      if (upload.totalSize == 0)
+        _validSPIFFSUpdate = false;
+    }
+  }
+}
+
+void WebConfig::handleUploadResult(ESP8266WebServer &server) {
+  Serial.println(_validSPIFFSUpdate ? "OK" : "NOK");
+  if (_validSPIFFSUpdate)
+    server.send_P(200, PSTR("text/html"), NOHANDLER_upload_success_html);
+  else
+    server.send_P(200, PSTR("text/html"), NOHANDLER_upload_error_html);
+}
+
 void WebConfig::beginStatus(ESP8266WebServer &server) {}
-void WebConfig::beginWifi(ESP8266WebServer &server) {}
+void WebConfig::beginWifi(ESP8266WebServer &server) {
+  // read config;
+  server.on("/wifi", HTTP_GET, [&]() {
+    String value = String("{ \"networks\": [");
+
+    char buf[128];
+    int n = WiFi.scanNetworks();
+    for (int i = 0; i < n; ++i) {
+      std::map<String, String>::iterator it = _wifi_networks.find(WiFi.SSID(i));
+      sprintf(buf, "{\"ssid\":\"%s\",\"rssi\":%d,\"open\": %s, \"saved\":%s}\0",
+              WiFi.SSID(i).c_str(), WiFi.RSSI(i),
+              (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? "true" : "false",
+              it != _wifi_networks.end() ? "true" : "false");
+      value += buf;
+      if (i < n - 1)
+        value += ",";
+    }
+    value += "]}";
+    server.send(200, "application/json", value);
+  });
+
+  server.on("/wifi", HTTP_POST, [&]() {
+    Serial.println("Post /wifi");
+    const size_t capacity = JSON_OBJECT_SIZE(2) + 512;
+    DynamicJsonDocument doc(capacity);
+    deserializeJson(doc, server.arg("plain").c_str());
+
+    String ssid = doc["ssid"].as<String>();
+    String password = doc["password"].as<String>();
+
+    std::map<String, String>::iterator it = _wifi_networks.find(ssid);
+    if (it != _wifi_networks.end())
+      Serial.printf("Exists");
+    _wifi_networks[ssid] = password;
+
+    server.send(200, "application/json", "{\"result\": \"ok\"}");
+  });
+
+  server.on("/wifi/forget", HTTP_POST, [&]() {
+    Serial.println("Post /wifi");
+    const size_t capacity = JSON_OBJECT_SIZE(1) + 512;
+    DynamicJsonDocument doc(capacity);
+    deserializeJson(doc, server.arg("plain").c_str());
+
+    String ssid = doc["ssid"].as<String>();
+
+    std::map<String, String>::iterator it = _wifi_networks.find(ssid);
+    if (it != _wifi_networks.end())
+      _wifi_networks.erase(ssid);
+    server.send(200, "application/json", "{\"result\": \"ok\"}");
+  });
+}
 
 const char *WebConfig::getUIVersion() { return _ui_version; };
 const char *WebConfig::getUIDate() { return _ui_date; };
