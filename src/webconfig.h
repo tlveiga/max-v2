@@ -5,8 +5,7 @@
 #include <FS.h>
 #include <map>
 
-enum class opts
-{
+enum class opts {
   info_id,
   info_name,
   info_update_server,
@@ -17,19 +16,11 @@ enum class opts
   ui_date
 };
 
-class WebConfig
-{
+class WebConfig {
 private:
-  char _ui_version[16];
-  char _ui_date[12];
+  unsigned long _lastUpdateLoop;
 
-  char _info_id[8];
-  char _info_name[64];
-  char _info_update_server[256];
   bool _info_auto_update;
-  char _mqtt_server[256];
-  char _mqtt_in_topic[256];
-  char _mqtt_out_topic[256];
   bool _mqtt_active;
 
   std::map<String, String> _wifi_networks;
@@ -48,22 +39,18 @@ private:
 
   void createIfNotFound(const char *filename);
 
+  void updateSTAMode();
+  void updateAPMode();
+
 public:
   WebConfig();
   void begin(ESP8266WebServer &server);
 
-  const char *getUIVersion();
-  const char *getUIDate();
-
-  const char *getInfoId();
-  const char *getInfoName();
-  const char *getUpdateServer();
+  const String getConfig(const opts opt);
   const bool getAutoUpdate();
-
-  const char *getMQTTServer();
-  const char *getMQTTInTopic();
-  const char *getMQTTOutTopic();
   const bool getMQTTActive();
+
+  void update();
 
   ~WebConfig();
 };

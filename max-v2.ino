@@ -50,4 +50,7 @@ void setup() {
   });
 }
 
-void loop() { server.handleClient(); }
+void loop() {
+  server.handleClient();
+  setupServer.update();
+}

@@ -7,6 +7,7 @@ var __wifi = {};
 var __selectedSSID = "";
 const emptypassword = "#$%__EMPTY__%$#";
 
+
 function setElementHtml(name, html) {
   var elem = document.getElementById(name);
   elem.innerHTML = html;
@@ -60,6 +61,25 @@ function post(url, body) {
     headers: headers,
     body: body ? JSON.stringify(body) : null,
   }).then(function (res) { return res.json() });
+}
+
+function rssiText(rssi) {
+  if (rssi > -55) return "amazing";
+  else if (rssi > -65) return "very good";
+  else if (rssi > -70) return "good";
+  else if (rssi > -78) return "okay";
+  else if (rssi > -82) return "poor";
+  else return "awfull";
+}
+
+
+function rssiBarsClass(rssi) {
+  if (rssi > -55) return "rssi_amazing";
+  else if (rssi > -65) return "rssi_verygood";
+  else if (rssi > -70) return "rssi_good";
+  else if (rssi > -78) return "rssi_okay";
+  else if (rssi > -82) return "rssi_poor";
+  else return "rssi_awfull";
 }
 
 function getInfo() {
@@ -119,14 +139,17 @@ function loadScannedNetworks(networks) {
     if (__selectedSSID === f.ssid)
       li.classList.add("selected");
     li.classList.add(f.open ? "open" : "closed");
+    li.classList.add(rssiBarsClass(f.rssi));
     list.appendChild(li);
     var html = "";
     if (f.saved)
       html += "&#8226 ­"
-    html += f.ssid + " (" + f.rssi + ")";
+    html += f.ssid;
     li.innerHTML = html;
     li.addEventListener("click", function () { selectWifi(f.ssid) });
   });
+
+  resetSelectedWifi();
 }
 
 function selectWifi(ssid) {
@@ -137,14 +160,30 @@ function selectWifi(ssid) {
   setElementValue("wifi_password", network.saved ? emptypassword : "");
 
   setDisableValue("forgetWifi", !network.saved);
+  setElementHtml("connectWifi", network.saved ? "connect" : "save & connect");
   setDisableValue("connectWifi", false);
 
 }
 
+function resetSelectedWifi() {
+  __selectedSSID = "";
+  setElementValue("wifi_ssid", "");
+  setElementValue("wifi_password", "");
+  setDisableValue("forgetWifi", true);
+  setDisableValue("connectWifi", true);
+  setElementHtml("connectWifi", "save & connect");
+}
+
 function updateStatus() {
   json("/wifi/status").then(function (json) {
-    setElementHtml("wifi_status", json.status);
-    setElementHtml("ip", json.ip);
+    setElementHtml("wifi_status_mode", json.mode);
+    setElementHtml("wifi_status_hostname", json.hostname);
+    setElementHtml("wifi_status_ssid", json.ssid);
+    setElementHtml("wifi_status_rssi", rssiText(json.rssi));
+    setElementHtml("wifi_status_ip", json.ip);
+    setElementHtml("wifi_status_dns", json.dns);
+    setElementHtml("wifi_status_gateway", json.gateway);
+    setElementHtml("wifi_status_mac", json.mac);
 
     setTimeout(updateStatus, 10000);
   });
@@ -169,7 +208,7 @@ function createVersionUrl(name, type, ver) {
 
 function ping() {
   new Promise(function (res, rej) {
-    var tm = setTimeout(rej, 1000);
+    var tm = setTimeout(rej, 3000);
     fetch("/ping").then(function (response) {
       clearTimeout(tm);
       if (response.status === 200)
@@ -182,10 +221,10 @@ function ping() {
     });
   }).then(function () {
     document.getElementById("ping").setAttribute("status", "online");
-    setTimeout(ping, 3000);
+    setTimeout(ping, 10000);
   }, function () {
     document.getElementById("ping").setAttribute("status", "offline");
-    setTimeout(ping, 3000);
+    setTimeout(ping, 10000);
   });
 }
 

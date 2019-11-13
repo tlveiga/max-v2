@@ -5,7 +5,7 @@
   "main": "webpack.config.js",
   "scripts": {
     "web": "node node_modules/webpack/bin/webpack.js",
-    "web-watch": "node node_modules/webpack/bin/webpack.js",
+    "web-watch": "node node_modules/webpack/bin/webpack.js -w",
     "progmem": "node serve_files_in_progmem.js"
   },
   "repository": {
