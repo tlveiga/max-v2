@@ -5,7 +5,20 @@
 #include <FS.h>
 #include <map>
 
-class WebConfig {
+enum class opts
+{
+  info_id,
+  info_name,
+  info_update_server,
+  mqtt_server,
+  mqtt_in_topic,
+  mqtt_out_topic,
+  ui_version,
+  ui_date
+};
+
+class WebConfig
+{
 private:
   char _ui_version[16];
   char _ui_date[12];
@@ -20,6 +33,7 @@ private:
   bool _mqtt_active;
 
   std::map<String, String> _wifi_networks;
+  std::map<opts, String> _cfg;
 
   bool _validSPIFFSUpdate;
   File _uploadFile;
@@ -31,6 +45,8 @@ private:
 
   void handleFileUpload(const char *filename, ESP8266WebServer &server);
   void handleUploadResult(ESP8266WebServer &server);
+
+  void createIfNotFound(const char *filename);
 
 public:
   WebConfig();

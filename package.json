@@ -4,7 +4,9 @@
   "description": "",
   "main": "webpack.config.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "web": "node node_modules/webpack/bin/webpack.js",
+    "web-watch": "node node_modules/webpack/bin/webpack.js",
+    "progmem": "node serve_files_in_progmem.js"
   },
   "repository": {
     "type": "git",

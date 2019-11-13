@@ -5,7 +5,7 @@
   <p>Redirect in <span id="s"></span></p>
   <script>
     var count = 3;
-    document.getElementById("s").innerHTML = count;
+    document.getElementById("s").innerHTML = count--;
     setInterval(() => {
       if (count == 0)
         location.href = "/web-interface-upload";

@@ -11,9 +11,15 @@
 
 WebConfig::WebConfig() {}
 
-void WebConfig::begin(ESP8266WebServer &server) {
+void WebConfig::begin(ESP8266WebServer &server)
+{
 
-  sprintf(_info_id, "%X\0", ESP.getChipId());
+  char info_id[10];
+  sprintf(info_id, "%X\0", ESP.getChipId());
+  _cfg[opts::info_id] = String(info_id);
+
+  createIfNotFound("/index.html");
+  createIfNotFound("/main.js");
 
   server.serveStatic("/", SPIFFS, "/index.html");
   server.serveStatic("/main.js", SPIFFS, "/main.js");
@@ -35,6 +41,10 @@ void WebConfig::begin(ESP8266WebServer &server) {
   server.on("/web-interface-upload/main", HTTP_POST,
             [&]() { handleUploadResult(server); },
             [&]() { handleFileUpload("/main.js", server); });
+
+  server.on("/web-interface-upload/version", HTTP_POST,
+            [&]() { handleUploadResult(server); },
+            [&]() { handleFileUpload(UIVERSION, server); });
   /* END Web interface uploads */
 
   server.on("/test", HTTP_GET, [&]() {
@@ -54,29 +64,40 @@ void WebConfig::begin(ESP8266WebServer &server) {
   });
 }
 
-void WebConfig::beginInfo(ESP8266WebServer &server) {
+void WebConfig::beginInfo(ESP8266WebServer &server)
+{
 
   /* Reading config values or using defaults */
   const size_t capacity = JSON_OBJECT_SIZE(7) + 2048; // change to real values
   DynamicJsonDocument doc(capacity);
 
-  if (readJSONFile(UIVERSION, doc)) {
-    sprintf(_ui_version, doc["version"].as<const char *>());
-    sprintf(_ui_date, doc["date"].as<const char *>());
-  } else {
-    sprintf(_ui_version, "%s\0", "none");
-    sprintf(_ui_date, "%s\0", "0");
+  if (readJSONFile(UIVERSION, doc))
+  {
+    _cfg[opts::ui_version] = doc["version"].as<String>();
+    _cfg[opts::ui_date] = doc["date"].as<String>();
   }
 
-  if (readJSONFile(INFOFILE, doc)) {
-    sprintf(_info_name, doc["name"].as<const char *>());
-    sprintf(_info_update_server, doc["update_server"].as<const char *>());
+  if (_cfg[opts::ui_version].length() == 0)
+    _cfg[opts::ui_version] = String("none");
+  if (_cfg[opts::ui_date].length() == 0)
+    _cfg[opts::ui_date] = String("0");
+
+  if (readJSONFile(INFOFILE, doc))
+  {
+    _cfg[opts::info_name] = doc["name"].as<String>();
+    _cfg[opts::info_update_server] = doc["update_server"].as<String>();
     _info_auto_update = doc["auto_update"].as<bool>();
-  } else {
-    sprintf(_info_name, "%s-%s\0", FWCODE, _info_id);
-    sprintf(_info_update_server, "%s\0", DEFAULTUPDATESERVER);
-    _info_auto_update = false;
   }
+
+  if (_cfg[opts::info_name].length() == 0)
+  {
+    char info_name[32];
+    sprintf(info_name, "%s-%s\0", FWCODE, _info_id);
+    _cfg[opts::info_name] = String(info_name);
+  }
+
+  if (_cfg[opts::info_update_server].length() == 0)
+    _cfg[opts::info_update_server] = String(DEFAULTUPDATESERVER);
 
   /* INFO */
   server.on("/info", HTTP_GET, [&]() {
@@ -87,8 +108,8 @@ void WebConfig::beginInfo(ESP8266WebServer &server) {
             "\"%"
             "s\",\"fw_date\":%d,\"ui_version\":\"%s\",\"ui_date\":%s, "
             "\"update_server\":\"%s\",\"auto_update\":%s}",
-            _info_id, FWCODE, _info_name, FWVERSION, FWDATE, _ui_version,
-            _ui_date, _info_update_server,
+            _cfg[opts::info_id].c_str(), FWCODE, _cfg[opts::info_name].c_str(), FWVERSION, FWDATE,
+            _cfg[opts::ui_version].c_str(), _cfg[opts::ui_date].c_str(), _cfg[opts::info_update_server].c_str(),
             _info_auto_update ? "true" : "false");
     server.send(200, "application/json", buf);
     free(buf);
@@ -100,24 +121,28 @@ void WebConfig::beginInfo(ESP8266WebServer &server) {
     DynamicJsonDocument doc(capacity);
     deserializeJson(doc, server.arg("plain").c_str());
 
-    sprintf(_info_name, doc["name"].as<const char *>());
-    sprintf(_info_update_server, doc["update_server"].as<const char *>());
+    _cfg[opts::info_name] = doc["name"].as<String>();
+    _cfg[opts::info_update_server] = doc["update_server"].as<String>();
     _info_auto_update = doc["auto_update"].as<bool>();
 
     writeJSONFile(INFOFILE, doc);
-    server.send(200, "application/json", "{\"result\": \"ok\"}");
+    server.send(200, "application/json", R_OK);
   });
 }
-void WebConfig::beginMQTT(ESP8266WebServer &server) {
+void WebConfig::beginMQTT(ESP8266WebServer &server)
+{
   /* Reading config values or using defaults */
   const size_t capacity = JSON_OBJECT_SIZE(7) + 2048; // change to real values
   DynamicJsonDocument doc(capacity);
-  if (readJSONFile(MQTTFILE, doc)) {
+  if (readJSONFile(MQTTFILE, doc))
+  {
     sprintf(_mqtt_server, doc["server"].as<const char *>());
     sprintf(_mqtt_in_topic, doc["in_topic"].as<const char *>());
     sprintf(_mqtt_out_topic, doc["out_topic"].as<const char *>());
     _mqtt_active = doc["active"].as<bool>();
-  } else {
+  }
+  else
+  {
     sprintf(_mqtt_server, "%s\0", DEFAULTMQTTSERVER);
     sprintf(_mqtt_in_topic, "%s/in\0", FWCODE);
     sprintf(_mqtt_out_topic, "%s/out\0", FWCODE);
@@ -148,33 +173,45 @@ void WebConfig::beginMQTT(ESP8266WebServer &server) {
     _mqtt_active = doc["active"].as<bool>();
 
     writeJSONFile(MQTTFILE, doc);
-    server.send(200, "application/json", "{\"result\": \"ok\"}");
+    server.send(200, "application/json", R_OK);
   });
 }
 
 void WebConfig::handleFileUpload(const char *filename,
-                                 ESP8266WebServer &server) {
+                                 ESP8266WebServer &server)
+{
   HTTPUpload &upload = server.upload();
-  if (upload.status == UPLOAD_FILE_START) {
+  if (upload.status == UPLOAD_FILE_START)
+  {
     String path = String(filename);
-    if (!path.startsWith("/")) {
+    if (!path.startsWith("/"))
+    {
       path = "/" + path;
     }
     _uploadFile = SPIFFS.open(path, "w");
 
-    if (_uploadFile) {
+    if (_uploadFile)
+    {
       Serial.println("upload begin started!");
       _validSPIFFSUpdate = true;
-    } else {
+    }
+    else
+    {
       Serial.println("upload begin failed!");
       _validSPIFFSUpdate = false;
     }
-  } else if (upload.status == UPLOAD_FILE_WRITE) {
-    if (_uploadFile) {
+  }
+  else if (upload.status == UPLOAD_FILE_WRITE)
+  {
+    if (_uploadFile)
+    {
       _uploadFile.write(upload.buf, upload.currentSize);
     }
-  } else if (upload.status == UPLOAD_FILE_END) {
-    if (_uploadFile) {
+  }
+  else if (upload.status == UPLOAD_FILE_END)
+  {
+    if (_uploadFile)
+    {
       _uploadFile.close();
       Serial.print("handleFileUpload Size: ");
       Serial.println(upload.totalSize);
@@ -184,7 +221,8 @@ void WebConfig::handleFileUpload(const char *filename,
   }
 }
 
-void WebConfig::handleUploadResult(ESP8266WebServer &server) {
+void WebConfig::handleUploadResult(ESP8266WebServer &server)
+{
   Serial.println(_validSPIFFSUpdate ? "OK" : "NOK");
   if (_validSPIFFSUpdate)
     server.send_P(200, PSTR("text/html"), NOHANDLER_upload_success_html);
@@ -193,14 +231,20 @@ void WebConfig::handleUploadResult(ESP8266WebServer &server) {
 }
 
 void WebConfig::beginStatus(ESP8266WebServer &server) {}
-void WebConfig::beginWifi(ESP8266WebServer &server) {
+void WebConfig::beginWifi(ESP8266WebServer &server)
+{
   // read config;
   server.on("/wifi", HTTP_GET, [&]() {
     String value = String("{ \"networks\": [");
 
     char buf[128];
     int n = WiFi.scanNetworks();
-    for (int i = 0; i < n; ++i) {
+    std::map<String, bool> ssids;
+    for (int i = 0; i < n; ++i)
+    {
+      if (ssids.count(WiFi.SSID(i)) > 0)
+        continue;
+      ssids[WiFi.SSID(i)] = true;
       std::map<String, String>::iterator it = _wifi_networks.find(WiFi.SSID(i));
       sprintf(buf, "{\"ssid\":\"%s\",\"rssi\":%d,\"open\": %s, \"saved\":%s}\0",
               WiFi.SSID(i).c_str(), WiFi.RSSI(i),
@@ -228,7 +272,7 @@ void WebConfig::beginWifi(ESP8266WebServer &server) {
       Serial.printf("Exists");
     _wifi_networks[ssid] = password;
 
-    server.send(200, "application/json", "{\"result\": \"ok\"}");
+    server.send(200, "application/json", R_OK);
   });
 
   server.on("/wifi/forget", HTTP_POST, [&]() {
@@ -242,8 +286,26 @@ void WebConfig::beginWifi(ESP8266WebServer &server) {
     std::map<String, String>::iterator it = _wifi_networks.find(ssid);
     if (it != _wifi_networks.end())
       _wifi_networks.erase(ssid);
-    server.send(200, "application/json", "{\"result\": \"ok\"}");
+    server.send(200, "application/json", R_OK);
   });
+
+  server.on("/wifi/status", HTTP_GET, [&]() {
+    server.send(200, "application/json", R_OK);
+  });
+}
+
+void WebConfig::createIfNotFound(const char *filename)
+{
+  if (!SPIFFS.exists(filename))
+  {
+    Serial.print(filename);
+    Serial.println(" not found.");
+    File file = SPIFFS.open(filename, "w");
+    if (!file)
+      Serial.println(F("failed: creating file"));
+    else
+      file.close();
+  }
 }
 
 const char *WebConfig::getUIVersion() { return _ui_version; };
