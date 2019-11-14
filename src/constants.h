@@ -17,6 +17,7 @@
 #define MAXJSONFILESIZE 1024
 
 #define UPDATELOOPTIMESPAN 10000
+#define MINRSSILEVEL -80
 
 #define R_SUCCESS "{\"result\":\"success\"}"
 #define R_FAILED "{\"result\":\"failed\"}"

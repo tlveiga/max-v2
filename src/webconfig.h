@@ -16,14 +16,21 @@ enum class opts {
   ui_date
 };
 
+typedef struct {
+  String password;
+  wl_status_t status;
+  unsigned long lastupdate;
+} network_status;
+
 class WebConfig {
 private:
   unsigned long _lastUpdateLoop;
+  WiFiMode_t _lastmode; 
 
   bool _info_auto_update;
   bool _mqtt_active;
 
-  std::map<String, String> _wifi_networks;
+  std::map<String, network_status> _wifi_networks;
   std::map<opts, String> _cfg;
 
   bool _validSPIFFSUpdate;

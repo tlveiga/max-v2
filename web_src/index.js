@@ -385,7 +385,6 @@ document.body.onload = function () {
   setDisableValue("reconnectMQTT", true);
   setDisableValue("testMQTT", true);
   setDisableValue("saveMQTT", true);
-  setDisableValue("refreshWifi", true);
   setDisableValue("connectWifi", true);
   setDisableValue("forgetWifi", true);
 
