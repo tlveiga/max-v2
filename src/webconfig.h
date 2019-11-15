@@ -16,16 +16,19 @@ enum class opts {
   ui_date
 };
 
+typedef enum { WM_INIT, WM_STA, WM_AP } wifi_mode;
+typedef enum { WS_READY, WS_CONNECTED, WS_FAILED } wifi_status;
+
 typedef struct {
   String password;
-  wl_status_t status;
+  wifi_status status;
   unsigned long lastupdate;
 } network_status;
 
 class WebConfig {
 private:
   unsigned long _lastUpdateLoop;
-  WiFiMode_t _lastmode; 
+  wifi_mode _lastmode;
 
   bool _info_auto_update;
   bool _mqtt_active;
@@ -46,8 +49,13 @@ private:
 
   void createIfNotFound(const char *filename);
 
-  void updateSTAMode();
-  void updateAPMode();
+  wifi_mode updateSTAMode();
+  wifi_mode updateAPMode();
+
+  String getBestNetwork();
+
+  wifi_status connectToBestNetwork();
+  wifi_status connect(String ssid, String password);
 
 public:
   WebConfig();

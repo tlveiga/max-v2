@@ -18,6 +18,8 @@
 
 #define UPDATELOOPTIMESPAN 10000
 #define MINRSSILEVEL -80
+// com delay de 200ms
+#define CONNECTIONRETRIES 50
 
 #define R_SUCCESS "{\"result\":\"success\"}"
 #define R_FAILED "{\"result\":\"failed\"}"
