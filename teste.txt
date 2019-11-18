@@ -3,21 +3,29 @@ Arranca
  # SIM - Modo STA
  # NÃO - Modo AP
 
+Update
+-Verifica o modo
+  # AP ou INIT - Update modo AP
+  # STA - Update Modo STA
 
 Modo STA
- - Verifica se está ligado
+- Verifica se está ligado
   # SIM - verifica o nível RSSI
     - desliga se o nível estiver muito baixo, salta para CP1
+- Verifica se está ligado
+  # SIM - continua
   # NÃO - Verifica se tem redes disponíveis - CP1
       # SIM - Tenta ligar à próxima rede
         - Conseguiu ligar à rede
           # SIM - continua
           # NÃO - salta para CP1
-      # NÃO - Modo AP
+- Verifica se está ligado
+  # SIM - modo AP
+  # NÃO - modo INIT
 
 Modo AP
  - Verifica se está em modo AP
-  # NÃO - Activa o modo AP
+  # NÃO - Activa o modo AP (modo INIT)
   # SIM - Verifica se tem redes disponíveis - CP2
       # SIM - Tenta ligar à próxima rede
         - Conseguiu ligar à rede
@@ -28,3 +36,14 @@ Modo AP
     # SIM - do it
 
 Verificar se o ESP8266 no modo AP_STA consegue tentar ligar-se a uma STA mantendo o modo AP
+
+FEATURES
+ - Quando está em modo AP deve desactivar o update do estado quando há utilizadores na página de configuração (verificar o tempo do último ping). Só muda de estado com um connect.
+ - Considerar deixar de utilizar a biblioteca ArduinoJson para escrever os json para ficheiro.
+ - Adicionar username a password ao servidor mqtt
+ - Adicionar root path
+ - Considerar get status e/ou refresh wifi como forma de ping (e mudar a forma como é feito o pooling)
+ - Campo status deverá ter duas colunas
+
+BUGS
+ - Às vezes o savefile das configurações de wifi não funcionam, parece que a biblioteca ArduinoJson não está a criar bem o objecto. Considerar mudar o código para um write construindo eu o json.

@@ -83,3 +83,20 @@ bool writeJSONToSPI(uint32_t addr, uint32_t size,
                     const DynamicJsonDocument json) {
   return false;
 }
+
+bool writeFile(const char *filename, String str) {
+  Serial.print(F("Saving file: "));
+  Serial.println(filename);
+
+  File file = SPIFFS.open(filename, "w");
+  if (!file) {
+    Serial.println(F("failed: creating file"));
+    return false;
+  }
+  Serial.printf("Writing %d bytes", str.length());
+
+  file.println(str.c_str());
+  file.close();
+
+  return true;
+}

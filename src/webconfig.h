@@ -3,10 +3,11 @@
 
 #include <ESP8266WebServer.h>
 #include <FS.h>
+#include <list>
 #include <map>
+#include <utility>
 
-enum class opts
-{
+enum class opts {
   info_id,
   info_name,
   info_update_server,
@@ -17,29 +18,23 @@ enum class opts
   ui_date
 };
 
-typedef enum
-{
-  WM_INIT,
-  WM_STA,
-  WM_AP
-} wifi_mode;
-typedef enum
-{
-  WS_READY, // ready to connect 
+typedef enum { WM_INIT, WM_STA, WM_AP } wifi_mode;
+typedef enum {
+  WS_READY,     // ready to connect
   WS_CONNECTED, // connected
   WS_SUSPENDED, // failed to connect but will retry
-  WS_FAILED // failed to connect "wrong password"
+  WS_FAILED     // failed to connect "wrong password"
 } wifi_status;
 
-typedef struct
-{
+typedef struct {
   String password;
   wifi_status status;
   unsigned long lastupdate;
 } network_status;
 
-class WebConfig
-{
+typedef std::pair<String, int32_t> SSID_RSSI_pair;
+
+class WebConfig {
 private:
   unsigned long _lastUpdateLoop;
   wifi_mode _lastmode;
@@ -67,6 +62,8 @@ private:
   wifi_mode updateAPMode();
 
   bool saveNetworks();
+  std::list<SSID_RSSI_pair> getNetworksInRange();
+
   String getBestNetwork();
 
   wifi_status connectToBestNetwork();
