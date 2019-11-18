@@ -1,0 +1,30 @@
+Arranca
+ - Verifica se tem redes disponíveis
+ # SIM - Modo STA
+ # NÃO - Modo AP
+
+
+Modo STA
+ - Verifica se está ligado
+  # SIM - verifica o nível RSSI
+    - desliga se o nível estiver muito baixo, salta para CP1
+  # NÃO - Verifica se tem redes disponíveis - CP1
+      # SIM - Tenta ligar à próxima rede
+        - Conseguiu ligar à rede
+          # SIM - continua
+          # NÃO - salta para CP1
+      # NÃO - Modo AP
+
+Modo AP
+ - Verifica se está em modo AP
+  # NÃO - Activa o modo AP
+  # SIM - Verifica se tem redes disponíveis - CP2
+      # SIM - Tenta ligar à próxima rede
+        - Conseguiu ligar à rede
+          # SIM - muda o modo para STA
+          # NÃO - notifica que é necessário passar novamente para modo AP caso não hava ligação e salta para CP2
+      # NÃO - continua
+  - É necessário reactivar AP
+    # SIM - do it
+
+Verificar se o ESP8266 no modo AP_STA consegue tentar ligar-se a uma STA mantendo o modo AP

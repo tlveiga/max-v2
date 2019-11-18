@@ -5,7 +5,8 @@
 #include <FS.h>
 #include <map>
 
-enum class opts {
+enum class opts
+{
   info_id,
   info_name,
   info_update_server,
@@ -16,16 +17,29 @@ enum class opts {
   ui_date
 };
 
-typedef enum { WM_INIT, WM_STA, WM_AP } wifi_mode;
-typedef enum { WS_READY, WS_CONNECTED, WS_FAILED } wifi_status;
+typedef enum
+{
+  WM_INIT,
+  WM_STA,
+  WM_AP
+} wifi_mode;
+typedef enum
+{
+  WS_READY, // ready to connect 
+  WS_CONNECTED, // connected
+  WS_SUSPENDED, // failed to connect but will retry
+  WS_FAILED // failed to connect "wrong password"
+} wifi_status;
 
-typedef struct {
+typedef struct
+{
   String password;
   wifi_status status;
   unsigned long lastupdate;
 } network_status;
 
-class WebConfig {
+class WebConfig
+{
 private:
   unsigned long _lastUpdateLoop;
   wifi_mode _lastmode;
@@ -52,6 +66,7 @@ private:
   wifi_mode updateSTAMode();
   wifi_mode updateAPMode();
 
+  bool saveNetworks();
   String getBestNetwork();
 
   wifi_status connectToBestNetwork();

@@ -11,9 +11,9 @@
 
 WebConfig::WebConfig() {}
 
-void WebConfig::begin(ESP8266WebServer &server) {
+void WebConfig::begin(ESP8266WebServer &server)
+{
   _lastUpdateLoop = -UPDATELOOPTIMESPAN;
-  _lastmode = WM_INIT;
   WiFi.disconnect();
 
   char info_id[10];
@@ -66,13 +66,15 @@ void WebConfig::begin(ESP8266WebServer &server) {
   });
 }
 
-void WebConfig::beginInfo(ESP8266WebServer &server) {
+void WebConfig::beginInfo(ESP8266WebServer &server)
+{
 
   /* Reading config values or using defaults */
   const size_t capacity = JSON_OBJECT_SIZE(7) + 2048; // change to real values
   DynamicJsonDocument doc(capacity);
 
-  if (readJSONFile(UIVERSION, doc)) {
+  if (readJSONFile(UIVERSION, doc))
+  {
     _cfg[opts::ui_version] = doc["version"].as<String>();
     _cfg[opts::ui_date] = doc["date"].as<String>();
   }
@@ -82,13 +84,15 @@ void WebConfig::beginInfo(ESP8266WebServer &server) {
   if (_cfg[opts::ui_date].length() == 0)
     _cfg[opts::ui_date] = String("0");
 
-  if (readJSONFile(INFOFILE, doc)) {
+  if (readJSONFile(INFOFILE, doc))
+  {
     _cfg[opts::info_name] = doc["name"].as<String>();
     _cfg[opts::info_update_server] = doc["update_server"].as<String>();
     _info_auto_update = doc["auto_update"].as<bool>();
   }
 
-  if (_cfg[opts::info_name].length() == 0) {
+  if (_cfg[opts::info_name].length() == 0)
+  {
     char info_name[32];
     sprintf(info_name, "%s-%s\0", FWCODE, _cfg[opts::info_id].c_str());
     _cfg[opts::info_name] = String(info_name);
@@ -96,9 +100,6 @@ void WebConfig::beginInfo(ESP8266WebServer &server) {
 
   if (_cfg[opts::info_update_server].length() == 0)
     _cfg[opts::info_update_server] = String(DEFAULTUPDATESERVER);
-
-  WiFi.hostname(_cfg[opts::info_name]);
-  WiFi.mode(_wifi_networks.size() > 0 ? WIFI_STA : WIFI_AP);
 
   /* INFO */
   server.on("/info", HTTP_GET, [&]() {
@@ -133,11 +134,13 @@ void WebConfig::beginInfo(ESP8266WebServer &server) {
     server.send(200, "application/json", R_OK);
   });
 }
-void WebConfig::beginMQTT(ESP8266WebServer &server) {
+void WebConfig::beginMQTT(ESP8266WebServer &server)
+{
   /* Reading config values or using defaults */
   const size_t capacity = JSON_OBJECT_SIZE(4) + 512; // change to real values
   DynamicJsonDocument doc(capacity);
-  if (readJSONFile(MQTTFILE, doc)) {
+  if (readJSONFile(MQTTFILE, doc))
+  {
     _cfg[opts::mqtt_server] = doc["server"].as<String>();
     _cfg[opts::mqtt_in_topic] = doc["in_topic"].as<String>();
     _cfg[opts::mqtt_out_topic] = doc["out_topic"].as<String>();
@@ -147,13 +150,15 @@ void WebConfig::beginMQTT(ESP8266WebServer &server) {
   if (_cfg[opts::mqtt_server].length() == 0)
     _cfg[opts::mqtt_server] = String(DEFAULTMQTTSERVER);
 
-  if (_cfg[opts::mqtt_in_topic].length() == 0) {
+  if (_cfg[opts::mqtt_in_topic].length() == 0)
+  {
     char topic[16];
     sprintf(topic, "%s/in\0", FWCODE);
     _cfg[opts::mqtt_in_topic] = String(topic);
   }
 
-  if (_cfg[opts::mqtt_out_topic].length() == 0) {
+  if (_cfg[opts::mqtt_out_topic].length() == 0)
+  {
     char topic[16];
     sprintf(topic, "%s/out\0", FWCODE);
     _cfg[opts::mqtt_out_topic] = String(topic);
@@ -189,28 +194,40 @@ void WebConfig::beginMQTT(ESP8266WebServer &server) {
 }
 
 void WebConfig::handleFileUpload(const char *filename,
-                                 ESP8266WebServer &server) {
+                                 ESP8266WebServer &server)
+{
   HTTPUpload &upload = server.upload();
-  if (upload.status == UPLOAD_FILE_START) {
+  if (upload.status == UPLOAD_FILE_START)
+  {
     String path = String(filename);
-    if (!path.startsWith("/")) {
+    if (!path.startsWith("/"))
+    {
       path = "/" + path;
     }
     _uploadFile = SPIFFS.open(path, "w");
 
-    if (_uploadFile) {
+    if (_uploadFile)
+    {
       Serial.println("upload begin started!");
       _validSPIFFSUpdate = true;
-    } else {
+    }
+    else
+    {
       Serial.println("upload begin failed!");
       _validSPIFFSUpdate = false;
     }
-  } else if (upload.status == UPLOAD_FILE_WRITE) {
-    if (_uploadFile) {
+  }
+  else if (upload.status == UPLOAD_FILE_WRITE)
+  {
+    if (_uploadFile)
+    {
       _uploadFile.write(upload.buf, upload.currentSize);
     }
-  } else if (upload.status == UPLOAD_FILE_END) {
-    if (_uploadFile) {
+  }
+  else if (upload.status == UPLOAD_FILE_END)
+  {
+    if (_uploadFile)
+    {
       _uploadFile.close();
       Serial.print("handleFileUpload Size: ");
       Serial.println(upload.totalSize);
@@ -220,7 +237,8 @@ void WebConfig::handleFileUpload(const char *filename,
   }
 }
 
-void WebConfig::handleUploadResult(ESP8266WebServer &server) {
+void WebConfig::handleUploadResult(ESP8266WebServer &server)
+{
   Serial.println(_validSPIFFSUpdate ? "OK" : "NOK");
   if (_validSPIFFSUpdate)
     server.send_P(200, PSTR("text/html"), NOHANDLER_upload_success_html);
@@ -229,15 +247,39 @@ void WebConfig::handleUploadResult(ESP8266WebServer &server) {
 }
 
 void WebConfig::beginStatus(ESP8266WebServer &server) {}
-void WebConfig::beginWifi(ESP8266WebServer &server) {
-  // read config;
+void WebConfig::beginWifi(ESP8266WebServer &server)
+{
+  /* Reading config values or using defaults */
+  const size_t capacity = JSON_OBJECT_SIZE(1) + 128 * JSON_OBJECT_SIZE(WL_NETWORKS_LIST_MAXNUM);
+  DynamicJsonDocument doc(capacity);
+
+  if (readJSONFile(WIFIFILE, doc))
+  {
+    JsonObject networks = doc["networks"].as<JsonObject>();
+    if (!networks.isNull())
+    {
+      unsigned long now = millis();
+      for (JsonPair kv : networks)
+      {
+        Serial.println(kv.key().c_str());
+        Serial.println(kv.value().as<char *>());
+        _wifi_networks[String(kv.key().c_str())] = {kv.value().as<String>(), WS_READY, now};
+      }
+    }
+  }
+
+  WiFi.hostname(_cfg[opts::info_name]);
+  _lastmode = WM_INIT;
+  WiFi.mode(_wifi_networks.size() > 0 ? WIFI_STA : WIFI_AP);
+
   server.on("/wifi", HTTP_GET, [&]() {
     String value = String("{ \"networks\": [");
 
     char buf[128];
     int n = WiFi.scanNetworks();
     std::map<String, bool> ssids;
-    for (int i = 0; i < n; ++i) {
+    for (int i = 0; i < n; ++i)
+    {
       if (ssids.count(WiFi.SSID(i)) > 0)
         continue;
       if (ssids.size() > 0)
@@ -258,19 +300,37 @@ void WebConfig::beginWifi(ESP8266WebServer &server) {
 
   server.on("/wifi", HTTP_POST, [&]() {
     Serial.println("Post /wifi");
+    const size_t post_capacity = JSON_OBJECT_SIZE(2) + 512;
+    DynamicJsonDocument post_doc(capacity);
+    deserializeJson(post_doc, server.arg("plain").c_str());
+
+    String ssid = post_doc["ssid"].as<String>();
+    String password = post_doc["password"].as<String>();
+    _wifi_networks[ssid] = {password, WS_READY, 0};
+
+    saveNetworks();
+
+    server.send(200, "application/json", R_OK);
+  });
+
+  server.on("/wifi/connect", HTTP_POST, [&]() {
+    Serial.println("Post /wifi/connect");
     const size_t capacity = JSON_OBJECT_SIZE(2) + 512;
     DynamicJsonDocument doc(capacity);
     deserializeJson(doc, server.arg("plain").c_str());
 
     String ssid = doc["ssid"].as<String>();
-    String password = doc["password"].as<String>();
 
     std::map<String, network_status>::iterator it = _wifi_networks.find(ssid);
     if (it != _wifi_networks.end())
-      Serial.printf("Exists");
-    _wifi_networks[ssid] = {password, WS_READY, 0};
-
-    server.send(200, "application/json", R_OK);
+    {
+      connect(it->first, it->second.password);
+      server.send(200, "application/json", R_OK);
+    }
+    else
+    {
+      server.send(200, "application/json", R_NOK);
+    }
   });
 
   server.on("/wifi/forget", HTTP_POST, [&]() {
@@ -284,12 +344,16 @@ void WebConfig::beginWifi(ESP8266WebServer &server) {
     std::map<String, network_status>::iterator it = _wifi_networks.find(ssid);
     if (it != _wifi_networks.end())
       _wifi_networks.erase(ssid);
+
+    saveNetworks();
+
     server.send(200, "application/json", R_OK);
   });
 
   server.on("/wifi/status", HTTP_GET, [&]() {
     String mode;
-    switch (WiFi.getMode()) {
+    switch (WiFi.getMode())
+    {
     case WIFI_STA:
       mode = "station";
       break;
@@ -319,8 +383,10 @@ void WebConfig::beginWifi(ESP8266WebServer &server) {
   });
 }
 
-void WebConfig::createIfNotFound(const char *filename) {
-  if (!SPIFFS.exists(filename)) {
+void WebConfig::createIfNotFound(const char *filename)
+{
+  if (!SPIFFS.exists(filename))
+  {
     Serial.print(filename);
     Serial.println(" not found.");
     File file = SPIFFS.open(filename, "w");
@@ -331,9 +397,11 @@ void WebConfig::createIfNotFound(const char *filename) {
   }
 }
 
-void WebConfig::update() {
+void WebConfig::update()
+{
   unsigned long elapsed = millis() - _lastUpdateLoop;
-  if (elapsed > UPDATELOOPTIMESPAN) {
+  if (elapsed > UPDATELOOPTIMESPAN)
+  {
     Serial.println("Checking status");
     auto mode = WiFi.getMode();
     if (mode == WiFiMode_t::WIFI_STA)
@@ -345,12 +413,15 @@ void WebConfig::update() {
   }
 }
 
-wifi_mode WebConfig::updateSTAMode() {
+wifi_mode WebConfig::updateSTAMode()
+{
   Serial.println("update STA Mode");
   wl_status_t status = WiFi.status();
-  if (status == WL_CONNECTED) {
+  if (status == WL_CONNECTED)
+  {
     int32_t rssi = WiFi.RSSI();
-    if (rssi < MINRSSILEVEL) {
+    if (rssi < MINRSSILEVEL)
+    {
       Serial.println("Poor signal strength");
       WiFi.disconnect();
       status = WL_DISCONNECTED;
@@ -358,7 +429,16 @@ wifi_mode WebConfig::updateSTAMode() {
     }
   }
 
-  if (status != WL_CONNECTED) {
+  if (status != WL_CONNECTED)
+  {
+    if (_wifi_networks.size() > 0)
+    {
+      // FALTA VERIFICAR SE HÁ ALGUEM A PINGAR O SITE
+      // SE HOUVER NÃO DEVE DEIXAR DESLIGAR O AP
+      wifi_status status = connectToBestNetwork();
+      if (status == WS_FAILED) // tentou ligar e falhou força a fazer o init
+        return WM_AP;
+    }
   }
 
   /*
@@ -378,9 +458,11 @@ wifi_mode WebConfig::updateSTAMode() {
   return WM_STA;
 }
 
-wifi_mode WebConfig::updateAPMode() {
+wifi_mode WebConfig::updateAPMode()
+{
   Serial.println("update AP Mode");
-  if (_lastmode != WM_AP) {
+  if (_lastmode != WM_AP)
+  {
     String ssid = _cfg[opts::info_name].length() == 0 ? String(FWCODE)
                                                       : _cfg[opts::info_name];
     WiFi.softAP(ssid);
@@ -390,18 +472,35 @@ wifi_mode WebConfig::updateAPMode() {
 
     Serial.print("IP address:\t");
     Serial.println(WiFi.softAPIP());
-  } else if (_wifi_networks.size() > 0) {
+  }
+  else if (_wifi_networks.size() > 0)
+  {
     // FALTA VERIFICAR SE HÁ ALGUEM A PINGAR O SITE
     // SE HOUVER NÃO DEVE DEIXAR DESLIGAR O AP
     wifi_status status = connectToBestNetwork();
     if (status == WS_FAILED) // tentou ligar e falhou força a fazer o init
-      return WM_INIT;
+      return WM_AP;
   }
 
   return WM_AP;
 }
 
-String WebConfig::getBestNetwork() {
+bool WebConfig::saveNetworks()
+{
+  const size_t capacity = JSON_OBJECT_SIZE(1) + 128 * JSON_OBJECT_SIZE(WL_NETWORKS_LIST_MAXNUM);
+  DynamicJsonDocument doc(capacity);
+  JsonObject networks = doc.createNestedObject("networks");
+  for (std::pair<const String, network_status> &pair : _wifi_networks)
+  {
+    networks[pair.first] = pair.second.password;
+    Serial.printf("%s: %s\n", pair.first.c_str(), pair.second.password.c_str());
+  }
+
+  return writeJSONFile(WIFIFILE, doc);
+}
+
+String WebConfig::getBestNetwork()
+{
   Serial.println("getBestNetwork");
   if (_wifi_networks.size() == 0)
     return "";
@@ -409,14 +508,19 @@ String WebConfig::getBestNetwork() {
   int32_t maxsignalfound = MINRSSILEVEL;
   String best;
   int n = WiFi.scanNetworks();
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++)
+  {
     String ssid = WiFi.SSID(i);
     std::map<String, network_status>::iterator it = _wifi_networks.find(ssid);
-    if (it != _wifi_networks.end() && it->second.status != WS_FAILED) {
+    if (it != _wifi_networks.end() && it->second.status != WS_FAILED)
+    {
       int32_t rssi = WiFi.RSSI(i);
       Serial.printf("%s %d %d\n", ssid.c_str(), rssi, it->second.status);
       if (rssi > maxsignalfound)
+      {
         best = ssid;
+        maxsignalfound = rssi;
+      }
     }
   }
 
@@ -425,11 +529,13 @@ String WebConfig::getBestNetwork() {
   return best;
 }
 
-wifi_status WebConfig::connectToBestNetwork() {
+wifi_status WebConfig::connectToBestNetwork()
+{
   Serial.println("connectToBestNetwork");
   String bestnetwork = getBestNetwork();
-  wifi_status status = WS_READY;
-  while (bestnetwork.length() > 0) {
+  wifi_status status = WS_FAILED;
+  while (bestnetwork.length() > 0)
+  {
     std::map<String, network_status>::iterator it =
         _wifi_networks.find(bestnetwork);
     wifi_status status = connect(bestnetwork, it->second.password);
@@ -443,14 +549,16 @@ wifi_status WebConfig::connectToBestNetwork() {
   return status;
 }
 
-wifi_status WebConfig::connect(String ssid, String password) {
+wifi_status WebConfig::connect(String ssid, String password)
+{
   Serial.print("Connecting to ");
   Serial.println(ssid);
   WiFi.disconnect();
   delay(10);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  for (int i = 0; i < CONNECTIONRETRIES && WiFi.status() != WL_CONNECTED; i++) {
+  for (int i = 0; i < CONNECTIONRETRIES && WiFi.status() != WL_CONNECTED; i++)
+  {
     Serial.print(".");
     delay(200);
   }
