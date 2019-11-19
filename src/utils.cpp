@@ -45,6 +45,7 @@ bool readJSONFile(const char *filename, DynamicJsonDocument &json) {
   char *buf = (char *)malloc(sizeof(char) * (size + 1));
   file.readBytes(buf, size);
   buf[size] = 0;
+  Serial.println(buf);
   DeserializationError error = deserializeJson(
       json, (const char *)buf); // the cast forces ArduinoJson to make a copy
   free(buf);
