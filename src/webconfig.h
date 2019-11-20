@@ -7,7 +7,8 @@
 #include <map>
 #include <utility>
 
-enum class opts {
+enum class opts : uint8_t
+{
   info_id,
   info_name,
   info_update_server,
@@ -18,15 +19,23 @@ enum class opts {
   ui_date
 };
 
-typedef enum { WM_INIT, WM_STA, WM_AP } wifi_mode;
-typedef enum {
-  WS_READY,     // ready to connect
-  WS_CONNECTED, // connected
-  WS_SUSPENDED, // failed to connect but will retry
-  WS_FAILED     // failed to connect "wrong password"
-} wifi_status;
+enum class wifi_mode : uint8_t
+{
+  init,
+  sta,
+  ap
+};
 
-typedef struct {
+enum class wifi_status : uint8_t
+{
+  ready,     // ready to connect
+  connected, // connected
+  suspended, // failed to connect but will retry
+  failed     // failed to connect "wrong password"
+};
+
+typedef struct
+{
   String password;
   wifi_status status;
   unsigned long lastupdate;
@@ -34,7 +43,8 @@ typedef struct {
 
 typedef std::pair<String, int32_t> SSID_RSSI_pair;
 
-class WebConfig {
+class WebConfig
+{
 private:
   unsigned long _lastUpdateLoop;
   wifi_mode _lastmode;

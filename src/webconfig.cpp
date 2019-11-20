@@ -276,15 +276,15 @@ void WebConfig::beginWifi(ESP8266WebServer &server)
         Serial.println(kv.key().c_str());
         Serial.println(kv.value().as<char *>());
         _wifi_networks[String(kv.key().c_str())] = {kv.value().as<String>(),
-                                                    WS_READY, now};
+                                                    wifi_status::ready, now};
       }
     }
   }
 
-  _wifi_networks[String(CFG_SSID)] = {String(CFG_PASSWORD), WS_READY, 0};
+  _wifi_networks[String(CFG_SSID)] = {String(CFG_PASSWORD), wifi_status::ready, 0};
 
   WiFi.hostname(_cfg[opts::info_name]);
-  _lastmode = _wifi_networks.size() > 0 ? WM_STA : WM_INIT;
+  _lastmode = _wifi_networks.size() > 0 ? wifi_mode::sta : wifi_mode::init;
 
   server.on("/wifi", HTTP_GET, [&]() {
     Serial.println("Call /wifi");
@@ -339,7 +339,7 @@ void WebConfig::beginWifi(ESP8266WebServer &server)
 
     String ssid = post_doc["ssid"].as<String>();
     String password = post_doc["password"].as<String>();
-    _wifi_networks[ssid] = {password, WS_READY, 0};
+    _wifi_networks[ssid] = {password, wifi_status::ready, 0};
 
     saveNetworks();
 
@@ -442,7 +442,7 @@ void WebConfig::update()
   if (elapsed > UPDATELOOPTIMESPAN)
   {
     Serial.print("Checking status: ");
-    if (_lastmode == WM_STA)
+    if (_lastmode == wifi_mode::sta)
       _lastmode = updateSTAMode();
     else
       _lastmode = updateAPMode();
@@ -474,7 +474,7 @@ wifi_mode WebConfig::updateSTAMode()
     {
       std::map<String, network_status>::iterator it =
           _wifi_networks.find(pair.first);
-      status = connect(pair.first, it->second.password) == WS_CONNECTED
+      status = connect(pair.first, it->second.password) == wifi_status::connected
                    ? WL_CONNECTED
                    : WL_DISCONNECTED;
       if (status == WL_CONNECTED)
@@ -482,7 +482,7 @@ wifi_mode WebConfig::updateSTAMode()
     }
   }
 
-  return status == WL_CONNECTED ? WM_STA : WM_INIT;
+  return status == WL_CONNECTED ? wifi_mode::sta : wifi_mode::init;
 
   /*
 
@@ -501,7 +501,7 @@ wifi_mode WebConfig::updateSTAMode()
 wifi_mode WebConfig::updateAPMode()
 {
   Serial.println("update AP Mode");
-  if (_lastmode == WM_INIT)
+  if (_lastmode == wifi_mode::init)
   {
     String ssid = _cfg[opts::info_name].length() == 0 ? String(FWCODE)
                                                       : _cfg[opts::info_name];
@@ -512,12 +512,12 @@ wifi_mode WebConfig::updateAPMode()
 
     Serial.print("IP address:\t");
     Serial.println(WiFi.softAPIP());
-    return WM_AP;
+    return wifi_mode::ap;
   }
   else
   {
     std::list<SSID_RSSI_pair> inrange = getNetworksInRange();
-    return inrange.size() > 0 ? WM_STA : WM_AP;
+    return inrange.size() > 0 ? wifi_mode::sta : wifi_mode::ap;
   }
 }
 
@@ -579,7 +579,7 @@ std::list<SSID_RSSI_pair> WebConfig::getNetworksInRange()
   {
     String ssid = WiFi.SSID(i);
     std::map<String, network_status>::iterator it = _wifi_networks.find(ssid);
-    if (it != _wifi_networks.end() && it->second.status != WS_FAILED)
+    if (it != _wifi_networks.end() && it->second.status != wifi_status::failed)
     {
       int32_t rssi = WiFi.RSSI(i);
       if (rssi > MINRSSILEVEL)
@@ -612,7 +612,7 @@ String WebConfig::getBestNetwork()
   {
     String ssid = WiFi.SSID(i);
     std::map<String, network_status>::iterator it = _wifi_networks.find(ssid);
-    if (it != _wifi_networks.end() && it->second.status != WS_FAILED)
+    if (it != _wifi_networks.end() && it->second.status != wifi_status::failed)
     {
       int32_t rssi = WiFi.RSSI(i);
       Serial.printf("%s %d %d\n", ssid.c_str(), rssi, it->second.status);
@@ -633,7 +633,7 @@ wifi_status WebConfig::connectToBestNetwork()
 {
   Serial.println("connectToBestNetwork");
   String bestnetwork = getBestNetwork();
-  wifi_status status = WS_FAILED;
+  wifi_status status = wifi_status::failed;
   while (bestnetwork.length() > 0)
   {
     std::map<String, network_status>::iterator it =
@@ -641,7 +641,7 @@ wifi_status WebConfig::connectToBestNetwork()
     wifi_status status = connect(bestnetwork, it->second.password);
     it->second.status = status;
     it->second.lastupdate = millis();
-    if (status == WS_CONNECTED)
+    if (status == wifi_status::connected)
       break;
     else
       bestnetwork = getBestNetwork();
@@ -667,7 +667,7 @@ wifi_status WebConfig::connect(String ssid, String password)
   if (WiFi.status() == WL_CONNECTED)
     Serial.println(WiFi.localIP().toString());
 
-  return WiFi.status() == WL_CONNECTED ? WS_CONNECTED : WS_FAILED;
+  return WiFi.status() == WL_CONNECTED ? wifi_status::connected : wifi_status::failed;
 }
 
 const String WebConfig::getConfig(const opts opt) { return _cfg[opt]; }
