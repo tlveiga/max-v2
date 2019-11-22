@@ -18,6 +18,8 @@ void setup()
   Serial.begin(115200);
   Serial.println("Booting...");
 
+  Serial.printf("Project: %s\nVersion: %s\n", FWCODE, FWVERSION);
+
   SPIFFS.begin();
   // WiFi.disconnect();
   // delay(10);

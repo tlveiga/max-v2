@@ -6,6 +6,7 @@
 #include <list>
 #include <map>
 #include <utility>
+#include "version.h"
 
 enum class opts : uint8_t
 {
@@ -48,6 +49,7 @@ class WebConfig
 private:
   unsigned long _lastUpdateLoop;
   wifi_mode _lastmode;
+  unsigned long _lastFWCheck;
 
   bool _info_auto_update;
   bool _mqtt_active;
@@ -82,6 +84,7 @@ private:
 public:
   WebConfig();
   void begin(ESP8266WebServer &server);
+  void updateNewFirmware();
 
   const String getConfig(const opts opt);
   const bool getAutoUpdate();

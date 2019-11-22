@@ -6,6 +6,7 @@
 
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
+#include <WiFiClient.h>
 
 #include "../setup.h"
 
@@ -25,6 +26,7 @@ WebConfig::WebConfig() {}
 void WebConfig::begin(ESP8266WebServer &server)
 {
   _lastUpdateLoop = -UPDATELOOPTIMESPAN;
+  _lastFWCheck = -FWCHECKTIMESPAN;
   WiFi.disconnect();
 
   char info_id[10];
@@ -118,11 +120,10 @@ void WebConfig::beginInfo(ESP8266WebServer &server)
     char *buf = (char *)malloc(5120);
     sprintf(buf,
             "{\"id\":\"%s\",\"code\":\"%s\",\"name\":\"%s\",\"fw_version\":"
-            "\"%"
-            "s\",\"fw_date\":%d,\"ui_version\":\"%s\",\"ui_date\":%s, "
+            "\"%s\",\"ui_version\":\"%s\",\"ui_date\":%s, "
             "\"update_server\":\"%s\",\"auto_update\":%s}",
             _cfg[opts::info_id].c_str(), FWCODE, _cfg[opts::info_name].c_str(),
-            FWVERSION, FWDATE, _cfg[opts::ui_version].c_str(),
+            FWVERSION, _cfg[opts::ui_version].c_str(),
             _cfg[opts::ui_date].c_str(), _cfg[opts::info_update_server].c_str(),
             _info_auto_update ? "true" : "false");
     server.send(200, "application/json", buf);
@@ -281,7 +282,9 @@ void WebConfig::beginWifi(ESP8266WebServer &server)
     }
   }
 
-  _wifi_networks[String(CFG_SSID)] = {String(CFG_PASSWORD), wifi_status::ready, 0};
+  // for test only
+  _wifi_networks[String(CFG_SSID)] = {String(CFG_PASSWORD), wifi_status::ready,
+                                      0};
 
   WiFi.hostname(_cfg[opts::info_name]);
   _lastmode = _wifi_networks.size() > 0 ? wifi_mode::sta : wifi_mode::init;
@@ -449,6 +452,15 @@ void WebConfig::update()
 
     _lastUpdateLoop = millis();
   }
+
+  if (_info_auto_update && _lastmode == wifi_mode::sta)
+  {
+    elapsed = millis() - _lastFWCheck;
+    if (elapsed > FWCHECKTIMESPAN)
+      updateNewFirmware();
+
+    _lastFWCheck = millis();
+  }
 }
 
 wifi_mode WebConfig::updateSTAMode()
@@ -474,9 +486,10 @@ wifi_mode WebConfig::updateSTAMode()
     {
       std::map<String, network_status>::iterator it =
           _wifi_networks.find(pair.first);
-      status = connect(pair.first, it->second.password) == wifi_status::connected
-                   ? WL_CONNECTED
-                   : WL_DISCONNECTED;
+      status =
+          connect(pair.first, it->second.password) == wifi_status::connected
+              ? WL_CONNECTED
+              : WL_DISCONNECTED;
       if (status == WL_CONNECTED)
         break;
     }
@@ -579,7 +592,8 @@ std::list<SSID_RSSI_pair> WebConfig::getNetworksInRange()
   {
     String ssid = WiFi.SSID(i);
     std::map<String, network_status>::iterator it = _wifi_networks.find(ssid);
-    if (it != _wifi_networks.end() && it->second.status != wifi_status::failed)
+    if (it != _wifi_networks.end() &&
+        it->second.status != wifi_status::failed)
     {
       int32_t rssi = WiFi.RSSI(i);
       if (rssi > MINRSSILEVEL)
@@ -612,7 +626,8 @@ String WebConfig::getBestNetwork()
   {
     String ssid = WiFi.SSID(i);
     std::map<String, network_status>::iterator it = _wifi_networks.find(ssid);
-    if (it != _wifi_networks.end() && it->second.status != wifi_status::failed)
+    if (it != _wifi_networks.end() &&
+        it->second.status != wifi_status::failed)
     {
       int32_t rssi = WiFi.RSSI(i);
       Serial.printf("%s %d %d\n", ssid.c_str(), rssi, it->second.status);
@@ -667,7 +682,66 @@ wifi_status WebConfig::connect(String ssid, String password)
   if (WiFi.status() == WL_CONNECTED)
     Serial.println(WiFi.localIP().toString());
 
-  return WiFi.status() == WL_CONNECTED ? wifi_status::connected : wifi_status::failed;
+  return WiFi.status() == WL_CONNECTED ? wifi_status::connected
+                                       : wifi_status::failed;
+}
+
+void WebConfig::updateNewFirmware()
+{
+  Serial.println("Checking for updates");
+  WiFiClient client;
+  HTTPClient http;
+  String url = _cfg[opts::info_update_server];
+  if (url.length() == 0)
+  {
+    Serial.println("Server url empty");
+    return;
+  }
+  if (url.charAt(url.length() - 1) != '/')
+    url += '/';
+  if (http.begin(client, url + String(FWCODE) + String(".json")))
+  {
+    int httpCode = http.GET();
+    // httpCode will be negative on error
+    if (httpCode > 0)
+    {
+      const size_t capacity = JSON_OBJECT_SIZE(4) + 512;
+      DynamicJsonDocument doc(capacity);
+      deserializeJson(doc, client);
+      const char *fw_version = doc["fw_version"].as<const char *>();
+      auto server_version = Version(fw_version);
+      auto my_version = Version(FWVERSION);
+      if (my_version < server_version)
+      {
+        Serial.println("FW update available");
+        String filename = doc["fw_file"].as<String>();
+        ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+        t_httpUpdate_return ret = ESPhttpUpdate.update(client, url + filename);
+        switch (ret)
+        {
+        case HTTP_UPDATE_FAILED:
+          Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+          break;
+
+        case HTTP_UPDATE_NO_UPDATES:
+          Serial.println("HTTP_UPDATE_NO_UPDATES");
+          break;
+
+        case HTTP_UPDATE_OK:
+          Serial.println("HTTP_UPDATE_OK");
+          break;
+        }
+      }
+      else
+      {
+        Serial.println("FW up to date");
+      }
+    }
+    else
+      Serial.println("error getting file");
+  }
+  else
+    Serial.println("server unreachable");
 }
 
 const String WebConfig::getConfig(const opts opt) { return _cfg[opt]; }
