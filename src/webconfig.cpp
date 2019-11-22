@@ -37,7 +37,7 @@ void WebConfig::begin(ESP8266WebServer &server) {
 
   server.serveStatic("/", SPIFFS, "/index.html");
   server.serveStatic("/main.js", SPIFFS, "/main.js");
-
+  // PROGMEM init
   setupServer(server);
 
   beginInfo(server);
@@ -75,6 +75,12 @@ void WebConfig::begin(ESP8266WebServer &server) {
             fs_info.pageSize, fs_info.maxOpenFiles, fs_info.maxPathLength);
     server.send(200, "application/json", buf);
     free(buf);
+  });
+
+  server.on("/update", HTTP_POST, [&]() {
+    Serial.println("Call /update");
+    server.send(200, "application/json", R_OK);
+    updateNewFirmware();
   });
 }
 
@@ -638,10 +644,11 @@ void WebConfig::updateNewFirmware() {
       auto server_version = Version(fw_version);
       auto my_version = Version(FWVERSION);
       if (my_version < server_version) {
-        Serial.println("FW update available");
         String filename = doc["fw_file"].as<String>();
         ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
-        t_httpUpdate_return ret = ESPhttpUpdate.update(client, url + filename);
+        Serial.print("FW update available ");
+        Serial.println(url + filename);
+        t_httpUpdate_return ret = ESPhttpUpdate.update(url + filename);
         switch (ret) {
         case HTTP_UPDATE_FAILED:
           Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n",

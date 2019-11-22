@@ -38,12 +38,10 @@ Modo AP
 Verificar se o ESP8266 no modo AP_STA consegue tentar ligar-se a uma STA mantendo o modo AP
 
 FEATURES
+ - Update da UI
+ - Possilidade de manter/esconder menus de config. Ex: Não quero MQTT no projecto, posso esconder.
  - Quando está em modo AP deve desactivar o update do estado quando há utilizadores na página de configuração (verificar o tempo do último ping). Só muda de estado com um connect.
- - Considerar deixar de utilizar a biblioteca ArduinoJson para escrever os json para ficheiro.
  - Adicionar username a password ao servidor mqtt
  - Adicionar root path
  - Considerar get status e/ou refresh wifi como forma de ping (e mudar a forma como é feito o pooling)
  - Campo status deverá ter duas colunas
-
-BUGS
- - Às vezes o savefile das configurações de wifi não funcionam, parece que a biblioteca ArduinoJson não está a criar bem o objecto. Considerar mudar o código para um write construindo eu o json.

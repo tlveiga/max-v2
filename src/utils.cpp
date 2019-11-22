@@ -2,26 +2,6 @@
 #include "constants.h"
 #include <FS.h>
 
-// bool readJSONFile(const char *filename, DynamicJsonDocument &json) {
-//   File file = SPIFFS.open(filename, "r");
-
-//   if (!file) {
-//     Serial.print("Could not open file: ");
-//     Serial.println(filename);
-//     return false;
-//   }
-
-//   DeserializationError error = deserializeJson(json, file);
-//   if (error) {
-//     Serial.print("Failed to parse file: ");
-//     Serial.println(filename);
-//     return false;
-//   }
-//   file.close();
-
-//   return true;
-// }
-
 bool readJSONFile(const char *filename, DynamicJsonDocument &json) {
   Serial.print(F("Loading file: "));
   Serial.println(filename);
@@ -45,7 +25,6 @@ bool readJSONFile(const char *filename, DynamicJsonDocument &json) {
   char *buf = (char *)malloc(sizeof(char) * (size + 1));
   file.readBytes(buf, size);
   buf[size] = 0;
-  Serial.println(buf);
   DeserializationError error = deserializeJson(
       json, (const char *)buf); // the cast forces ArduinoJson to make a copy
   free(buf);
@@ -96,7 +75,6 @@ bool writeFile(const char *filename, String str) {
   }
   Serial.printf("Writing %d bytes", str.length());
 
-  file.println(str.c_str());
   file.close();
 
   return true;

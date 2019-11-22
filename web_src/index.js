@@ -230,6 +230,22 @@ function ping() {
 
 /* Handlers */
 
+function compareVersion(v1, v2) {
+  if (typeof v1 !== 'string') return false;
+  if (typeof v2 !== 'string') return false;
+  v1 = v1.split('.');
+  v2 = v2.split('.');
+  const k = Math.min(v1.length, v2.length);
+  for (let i = 0; i < k; ++i) {
+    v1[i] = parseInt(v1[i], 10);
+    v2[i] = parseInt(v2[i], 10);
+    if (v1[i] > v2[i]) return 1;
+    if (v1[i] < v2[i]) return -1;
+  }
+  return v1.length == v2.length ? 0 : (v1.length < v2.length ? -1 : 1);
+}
+
+
 function checkNewVersion() {
   var url = __info.update_server;
   if (url.substr(-1) != "/")
@@ -240,28 +256,16 @@ function checkNewVersion() {
     setElementHtml("availableFWVersion", json.fw_version);
     setElementHtml("availableUIVersion", json.ui_version);
 
-    var hasfwupdate = __info.fw_date < json.fw_date;
-    var hasuiupdate = __info.ui_date < json.ui_date;
+    var hasfwupdate = compareVersion(__info.fw_version, __newVersion.fw_version);
+    var hasuiupdate = compareVersion(__info.ui_version, __newVersion.ui_version);
+
     setUpdateClass("fw_version", hasfwupdate);
     setUpdateClass("ui_version", hasuiupdate);
     setDisableValue("update", !hasfwupdate && !hasuiupdate);
   });
 }
 function updateFirmware() {
-  var hasfwupdate = __info.fw_date < __newVersion.fw_date;
-  var hasuiupdate = __info.ui_date < __newVersion.ui_date;
-
-  var request = {};
-  var url = __info.update_server;
-  if (url.substr(-1) != "/")
-    url += "/";
-
-  if (hasfwupdate)
-    request.fw = url.concat(createVersionUrl(__info.code, "fw", __newVersion.fw_version));
-  if (hasuiupdate)
-    request.ui = url.concat(createVersionUrl(__info.code, "ui", __newVersion.ui_version));
-
-  post("/update", request);
+  post("/update", {});
 }
 function restart() {
   post("/restart");
