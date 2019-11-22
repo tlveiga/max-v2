@@ -6,10 +6,8 @@
 #include <list>
 #include <map>
 #include <utility>
-#include "version.h"
 
-enum class opts : uint8_t
-{
+enum class opts : uint8_t {
   info_id,
   info_name,
   info_update_server,
@@ -20,23 +18,16 @@ enum class opts : uint8_t
   ui_date
 };
 
-enum class wifi_mode : uint8_t
-{
-  init,
-  sta,
-  ap
-};
+enum class wifi_mode : uint8_t { init, sta, ap };
 
-enum class wifi_status : uint8_t
-{
+enum class wifi_status : uint8_t {
   ready,     // ready to connect
   connected, // connected
   suspended, // failed to connect but will retry
   failed     // failed to connect "wrong password"
 };
 
-typedef struct
-{
+typedef struct {
   String password;
   wifi_status status;
   unsigned long lastupdate;
@@ -44,8 +35,7 @@ typedef struct
 
 typedef std::pair<String, int32_t> SSID_RSSI_pair;
 
-class WebConfig
-{
+class WebConfig {
 private:
   unsigned long _lastUpdateLoop;
   wifi_mode _lastmode;
