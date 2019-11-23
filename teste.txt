@@ -44,4 +44,3 @@ FEATURES
  - Adicionar username a password ao servidor mqtt
  - Adicionar root path
  - Considerar get status e/ou refresh wifi como forma de ping (e mudar a forma como é feito o pooling)
- - Campo status deverá ter duas colunas

@@ -305,3 +305,11 @@ section.info, section.mqtt {
 .pair label {
   margin-right: 5px;
 }
+
+.wifi_current>ul {
+  display: flex;
+}
+
+.wifi_current>ul>li {
+  width: 50%;
+}

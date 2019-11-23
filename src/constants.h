@@ -2,7 +2,7 @@
 #define __CONSTANTS_H__
 
 #define FWCODE "max"
-#define FWVERSION "0.1.1"
+#define FWVERSION "1.1.1"
 
 // FILES
 #define UIVERSION "/version.json"
@@ -18,6 +18,7 @@
 #define UPDATELOOPTIMESPAN 10000
 #define MINRSSILEVEL -83
 #define FWCHECKTIMESPAN 3600000
+#define MQTTRECONNECTTIMESPAN 10000
 // com delay de 200ms
 #define CONNECTIONRETRIES 50
 

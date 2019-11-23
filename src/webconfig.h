@@ -6,8 +6,10 @@
 #include <list>
 #include <map>
 #include <utility>
+#include <PubSubClient.h>
 
-enum class opts : uint8_t {
+enum class opts : uint8_t
+{
   info_id,
   info_name,
   info_update_server,
@@ -18,16 +20,23 @@ enum class opts : uint8_t {
   ui_date
 };
 
-enum class wifi_mode : uint8_t { init, sta, ap };
+enum class wifi_mode : uint8_t
+{
+  init,
+  sta,
+  ap
+};
 
-enum class wifi_status : uint8_t {
+enum class wifi_status : uint8_t
+{
   ready,     // ready to connect
   connected, // connected
   suspended, // failed to connect but will retry
   failed     // failed to connect "wrong password"
 };
 
-typedef struct {
+typedef struct
+{
   String password;
   wifi_status status;
   unsigned long lastupdate;
@@ -35,11 +44,16 @@ typedef struct {
 
 typedef std::pair<String, int32_t> SSID_RSSI_pair;
 
-class WebConfig {
+class WebConfig
+{
 private:
+  WiFiClient _espClient;
+  PubSubClient _mqttClient;
+
   unsigned long _lastUpdateLoop;
   wifi_mode _lastmode;
   unsigned long _lastFWCheck;
+  unsigned long _lastMqttReconnect;
 
   bool _info_auto_update;
   bool _mqtt_active;
@@ -62,6 +76,7 @@ private:
 
   wifi_mode updateSTAMode();
   wifi_mode updateAPMode();
+  void updateMqtt();
 
   bool saveNetworks();
   std::list<SSID_RSSI_pair> getNetworksInRange();
@@ -75,6 +90,8 @@ public:
   WebConfig();
   void begin(ESP8266WebServer &server);
   void updateNewFirmware();
+
+  void setMQTTCallback(MQTT_CALLBACK_SIGNATURE);
 
   const String getConfig(const opts opt);
   const bool getAutoUpdate();
