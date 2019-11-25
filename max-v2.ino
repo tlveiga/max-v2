@@ -12,46 +12,11 @@
 ESP8266WebServer server(80);
 WebConfig setupServer;
 
-void callback(char *topic, byte *payload, unsigned int length)
-{
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i = 0; i < length; i++)
-  {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
-}
-
-// void reconnect() {
-//   // Loop until we're reconnected
-//   if (!mqttClient.connected()) {
-//     Serial.print("Attempting MQTT connection...");
-//     // Create a random client ID
-//     String clientId = "ESP8266Client-";
-//     clientId += String(random(0xffff), HEX);
-//     Serial.println(clientId);
-//     // Attempt to connect
-//     if (mqttClient.connect(clientId.c_str())) {
-//       Serial.println("connected");
-//       // Once connected, publish an announcement...
-//       mqttClient.publish("outTopic", "hello world");
-//       // ... and resubscribe
-//       mqttClient.subscribe("inTopic");
-//     } else {
-//       Serial.print("failed, rc=");
-//       Serial.print(mqttClient.state());
-//       Serial.println(" try again in 5 seconds");
-//       // Wait 5 seconds before retrying
-//     }
-//   }
-// }
-
 unsigned long last = 0;
 void setup()
 {
   Serial.begin(115200);
+  pinMode(14, OUTPUT);
   Serial.println("Booting...");
 
   Serial.printf("Project: %s\nVersion: %s\n", FWCODE, FWVERSION);
@@ -80,7 +45,8 @@ void setup()
 
   setupServer.setMQTTCallback(
       [=](char *topic, uint8_t *message, unsigned int len) {
-        callback(topic, message, len);
+        if (len > 0)
+          digitalWrite(14, message[0] == '1' ? HIGH : LOW);
       });
 }
 

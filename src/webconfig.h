@@ -47,6 +47,7 @@ typedef std::pair<String, int32_t> SSID_RSSI_pair;
 class WebConfig
 {
 private:
+  String _root;
   WiFiClient _espClient;
   PubSubClient _mqttClient;
 
@@ -87,7 +88,7 @@ private:
   wifi_status connect(String ssid, String password);
 
 public:
-  WebConfig();
+  WebConfig(const char *root = NULL);
   void begin(ESP8266WebServer &server);
   void updateNewFirmware();
 

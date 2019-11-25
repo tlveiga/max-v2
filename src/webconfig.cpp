@@ -22,7 +22,10 @@ struct saved_networks_struct
   bool saved;
 };
 
-WebConfig::WebConfig() {}
+WebConfig::WebConfig(const char *root)
+{
+  _root = String(root);
+}
 
 void WebConfig::begin(ESP8266WebServer &server)
 {
@@ -40,8 +43,8 @@ void WebConfig::begin(ESP8266WebServer &server)
   createIfNotFound("/index.html");
   createIfNotFound("/main.js");
 
-  server.serveStatic("/", SPIFFS, "/index.html");
-  server.serveStatic("/main.js", SPIFFS, "/main.js");
+  server.serveStatic((_root + String("/")).c_str(), SPIFFS, "/index.html");
+  server.serveStatic((_root + String("/main.js")).c_str(), SPIFFS, "/main.js");
 
   // PROGMEM init
   setupServer(server);
@@ -464,7 +467,7 @@ void WebConfig::update()
     _lastFWCheck = millis();
   }
 
-  updateMqtt();
+  //updateMqtt();
 }
 
 wifi_mode WebConfig::updateSTAMode()
@@ -533,15 +536,15 @@ void WebConfig::updateMqtt()
   if (_lastmode == wifi_mode::sta && WiFi.status() == WL_CONNECTED && !_mqttClient.connected() && millis() - _lastMqttReconnect > MQTTRECONNECTTIMESPAN)
   {
     Serial.print("Connecting to MQTT server: ");
-    String willTopic = String("offline/");
-    willTopic.concat(_cfg[opts::info_name]);
+    String willTopic = String(_cfg[opts::info_name]);
+    willTopic.concat("/offline");
     const char *willMessage = "goodbye";
 
     if (_mqttClient.connect(_cfg[opts::info_name].c_str(), willTopic.c_str(), 1, false, willMessage))
     {
       Serial.println("connected");
-      String helloTopic = String("online/");
-      helloTopic.concat(_cfg[opts::info_name]);
+      String helloTopic = String(_cfg[opts::info_name]);
+      helloTopic.concat("/online");
       _mqttClient.publish(helloTopic.c_str(), "hello");
       String inTopic = String(_cfg[opts::info_name]);
       inTopic.concat("/");

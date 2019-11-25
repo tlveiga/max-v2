@@ -88,7 +88,6 @@ function getInfo() {
     setElementValue("name", json.name);
     setElementHtml("id", json.id);
     setElementHtml("fw_version", json.fw_version);
-    setElementHtml("ui_version", json.ui_version);
     setElementValue("updateServer", json.update_server);
     setCheckbox("autoUpdate", json.auto_update);
 
@@ -104,7 +103,7 @@ function getInfo() {
 }
 
 function getMQTT() {
-  json("mqtt").then(function (json) {
+  json("/mqtt").then(function (json) {
     __mqtt = json;
     setElementValue("mqtt_server", json.server);
     setElementValue("mqtt_in_topic", json.in_topic);
@@ -112,7 +111,6 @@ function getMQTT() {
     setCheckbox("mqtt_active", json.active);
 
     if (json.server && json.server.length) {
-      setDisableValue("reconnectMQTT", false);
       setDisableValue("testMQTT", false);
       setDisableValue("saveMQTT", false);
     }
@@ -254,14 +252,10 @@ function checkNewVersion() {
   json(url).then(function (json) {
     __newVersion = json;
     setElementHtml("availableFWVersion", json.fw_version);
-    setElementHtml("availableUIVersion", json.ui_version);
 
-    var hasfwupdate = compareVersion(__info.fw_version, __newVersion.fw_version);
-    var hasuiupdate = compareVersion(__info.ui_version, __newVersion.ui_version);
-
+    var hasfwupdate = compareVersion(__info.fw_version, __newVersion.fw_version) > 1;
     setUpdateClass("fw_version", hasfwupdate);
-    setUpdateClass("ui_version", hasuiupdate);
-    setDisableValue("update", !hasfwupdate && !hasuiupdate);
+    setDisableValue("update", !hasfwupdate);
   });
 }
 function updateFirmware() {
@@ -281,10 +275,6 @@ function saveDeviceInfo() {
   info.auto_update = getCheckbox("autoUpdate");
 
   post("/info", info).then(function (json) {
-  });
-}
-function reconnectMQTT() {
-  post("/mqtt/reconnect").then(function (json) {
   });
 }
 function testMQTT() {
@@ -346,7 +336,6 @@ function updateServeKeyUp(evt) {
 }
 function mqttServeKeyUp(evt) {
   var disable = evt.target.value.length == 0;
-  setDisableValue("reconnectMQTT", disable);
   setDisableValue("testMQTT", disable);
 }
 function wifiSSIDKeyUp(evt) {
@@ -370,7 +359,6 @@ document.body.onload = function () {
   addEvent("update", "click", updateFirmware);
   addEvent("restartDevice", "click", restart);
   addEvent("saveDevice", "click", saveDeviceInfo);
-  addEvent("reconnectMQTT", "click", reconnectMQTT);
   addEvent("testMQTT", "click", testMQTT);
   addEvent("saveMQTT", "click", saveMQTT);
   addEvent("refreshWifi", "click", refreshWifi);
@@ -386,7 +374,6 @@ document.body.onload = function () {
   setDisableValue("update", true);
   setDisableValue("restartDevice", true);
   setDisableValue("saveDevice", true);
-  setDisableValue("reconnectMQTT", true);
   setDisableValue("testMQTT", true);
   setDisableValue("saveMQTT", true);
   setDisableValue("connectWifi", true);
