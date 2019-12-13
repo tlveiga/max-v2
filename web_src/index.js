@@ -314,7 +314,7 @@ function connectWifi() {
   };
   if (saved == null)
     network.password = getElementValue("wifi_password");
-  post(saved ? "/wifi/connect" : "wifi", network).then(function (json) {
+  post(saved ? "/wifi/connect" : "/wifi", network).then(function (json) {
     refreshWifi();
   });
 }

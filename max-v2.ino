@@ -33,11 +33,16 @@ void setup() {
     ESP.restart();
   });
 
-  // setupServer.setMQTTCallback(
-  //     [=](char *topic, uint8_t *message, unsigned int len) {
-  //       if (len > 0)
-  //         digitalWrite(14, message[0] == '1' ? HIGH : LOW);
-  //     });
+  setupServer.setMQTTCallback(
+      [=](char *topic, uint8_t *message, unsigned int len) {
+        Serial.print("Message arrived [");
+        Serial.print(topic);
+        Serial.print("] ");
+        for (int i = 0; i < len; i++) {
+          Serial.print((char)message[i]);
+        }
+        Serial.println();
+      });
 }
 
 void loop() {

@@ -171,6 +171,19 @@ void WebConfig::beginMQTT(ESP8266WebServer &server) {
     writeJSONFile(MQTTFILE, doc);
     server.send(200, "application/json", R_OK);
   });
+
+  server.on("/mqtt/test", HTTP_POST, [&]() {
+    if (_mqttClient.connected()) {
+      char msg[32];
+      snprintf(msg, 50, "hello world #%x", millis());
+      Serial.print("Publish message: ");
+      Serial.println(msg);
+      _mqttClient.publish("outTopic", msg);
+      server.send(200, "application/json", R_SUCCESS);
+    }
+    else
+      server.send(200, "application/json", R_FAILED);
+  });
 }
 
 void WebConfig::beginStatus(ESP8266WebServer &server) {}
@@ -358,7 +371,7 @@ void WebConfig::update() {
     _lastFWCheck = millis();
   }
 
-  // updateMqtt();
+  updateMqtt();
 }
 
 wifi_mode WebConfig::updateSTAMode() {
@@ -386,9 +399,6 @@ wifi_mode WebConfig::updateSTAMode() {
       if (status == WL_CONNECTED)
         break;
     }
-
-    if (status == WL_CONNECTED)
-      _mqttClient.setServer(_cfg[opts::mqtt_server].c_str(), 1883);
   }
 
   return status == WL_CONNECTED ? wifi_mode::sta : wifi_mode::init;
@@ -418,7 +428,12 @@ void WebConfig::updateMqtt() {
   if (_lastmode == wifi_mode::sta && WiFi.status() == WL_CONNECTED &&
       !_mqttClient.connected() &&
       millis() - _lastMqttReconnect > MQTTRECONNECTTIMESPAN) {
+
+    _mqttClient.setServer(_cfg[opts::mqtt_server].c_str(), 1883);
+
     Serial.print("Connecting to MQTT server: ");
+    Serial.print(_cfg[opts::mqtt_server].c_str());
+    Serial.print(" ");
     String willTopic = String(_cfg[opts::info_name]);
     willTopic.concat("/offline");
     const char *willMessage = "goodbye";
