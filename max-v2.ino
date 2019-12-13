@@ -10,11 +10,10 @@
 #include "src/webconfig.h"
 
 ESP8266WebServer server(80);
-WebConfig setupServer;
+WebConfig setupServer("/cfg");
 
 unsigned long last = 0;
-void setup()
-{
+void setup() {
   Serial.begin(115200);
   pinMode(14, OUTPUT);
   Serial.println("Booting...");
@@ -34,24 +33,14 @@ void setup()
     ESP.restart();
   });
 
-  server.on("/mqtt/text", HTTP_POST, []() {
-    char msg[32];
-    snprintf(msg, 50, "hello world #%x", millis());
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    // mqttClient.publish("outTopic", msg);
-    server.send(200, "application/json", R_SUCCESS);
-  });
-
-  setupServer.setMQTTCallback(
-      [=](char *topic, uint8_t *message, unsigned int len) {
-        if (len > 0)
-          digitalWrite(14, message[0] == '1' ? HIGH : LOW);
-      });
+  // setupServer.setMQTTCallback(
+  //     [=](char *topic, uint8_t *message, unsigned int len) {
+  //       if (len > 0)
+  //         digitalWrite(14, message[0] == '1' ? HIGH : LOW);
+  //     });
 }
 
-void loop()
-{
+void loop() {
   setupServer.update();
   server.handleClient();
 

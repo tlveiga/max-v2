@@ -5,7 +5,6 @@
 #define FWVERSION "1.1.1"
 
 // FILES
-#define UIVERSION "/version.json"
 #define INFOFILE "/info.json"
 #define MQTTFILE "/mqtt.json"
 #define WIFIFILE "/wifi.json"
@@ -16,7 +15,7 @@
 #define MAXJSONFILESIZE 1024
 
 #define UPDATELOOPTIMESPAN 10000
-#define MINRSSILEVEL -83
+#define MINRSSILEVEL -200
 #define FWCHECKTIMESPAN 3600000
 #define MQTTRECONNECTTIMESPAN 10000
 // com delay de 200ms

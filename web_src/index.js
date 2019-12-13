@@ -278,7 +278,7 @@ function saveDeviceInfo() {
   });
 }
 function testMQTT() {
-  post("/mqtt/text").then(function (json) {
+  post("/mqtt/test").then(function (json) {
   });
 }
 function saveMQTT() {

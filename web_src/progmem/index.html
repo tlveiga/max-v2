@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>MAX</title>
+  <style>
+    body[cloak] {
+      opacity: 0;
+    }
+  </style>
+</head>
+
+<body cloak>
+  <header></header>
+  <main>
+    <h1>Device Info</h1>
+    <section class="container info">
+      <ul>
+        <li>
+          <label title="Name used to register on the network, and MQTT server.">Name</label>
+          <div class="value">
+            <input type="text" id="name" maxlength="16" />
+          </div>
+        </li>
+        <li class="no-input flex">
+          <label title="Firmware version installed">FW version</label>
+          <div id="fw_version" class="value"></div>
+          <div class="grow"></div>
+          <label title="Firmware version available on the update server.">Available FW Version</label>
+          <div id="availableFWVersion" class="value"></div>
+          <div class="grow"></div>
+          <label id="Device ID">ID</label>
+          <div id="id" class="value"></div>
+          <div class="grow"></div>
+        </li>
+        <li>
+          <label>Update Server</label>
+          <div class="value">
+            <input type="text" id="updateServer" />
+          </div>
+        </li>
+        <li class="no-input">
+        </li>
+        <li>
+          <label>Update on new version</label>
+          <input type="checkbox" id="autoUpdate" />
+        </li>
+      </ul>
+      <div class="actions flex">
+        <button id="checkUpdate">Check new version</button>
+        <button id="update">Update Firmware</button>
+        <button id="restartDevice">Restart</button>
+        <div class="grow"></div>
+        <button id="saveDevice">Save</button>
+      </div>
+    </section>
+    <h1>MQTT</h1>
+    <section class="container mqtt">
+      <ul>
+        <li>
+          <label>Server</label>
+          <div class="value">
+            <input type="text" id="mqtt_server" />
+          </div>
+        </li>
+        <li class="flex mqtt_topics">
+          <label>In Topic</label>
+          <div class="value">
+            <input type="text" id="mqtt_in_topic" />
+          </div>
+          <div class="grow"></div>
+          <label>Out Topic</label>
+          <div class="value">
+            <input type="text" id="mqtt_out_topic" />
+          </div>
+        </li>
+        <ul>
+          <li>
+            <label>Active</label>
+            <input type="checkbox" id="mqtt_active" />
+          </li>
+        </ul>
+      </ul>
+      <div class="actions flex">
+        <button id="testMQTT">Test</button>
+        <div class="grow"></div>
+        <button id="saveMQTT">Save</button>
+      </div>
+    </section>
+    <h1>WiFi</h1>
+    <section class="wifi">
+      <div class="container wifi_current">
+        <ul>
+          <li>
+            <div class="flex pair">
+              <label>Mode</label>
+              <div id="wifi_status_mode" class="value"></div>
+            </div>
+            <div class="flex pair">
+              <label>Hostname</label>
+              <div class="value" id="wifi_status_hostname"> </div>
+            </div>
+            <div class="flex pair">
+              <label>SSID</label>
+              <div id="wifi_status_ssid" class="value"></div>
+            </div>
+            <div class="flex pair">
+              <label>Signal Strength</label>
+              <div id="wifi_status_rssi" class="value"></div>
+            </div>
+          </li>
+          <li>
+            <div class="flex pair">
+              <label>IP</label>
+              <div id="wifi_status_ip" class="value"></div>
+            </div>
+            <div class="flex pair">
+              <label>DNS</label>
+              <div id="wifi_status_dns" class="value"></div>
+            </div>
+            <div class="flex pair">
+              <label>Gateway</label>
+              <div id="wifi_status_gateway" class="value"></div>
+            </div>
+            <div class="flex pair">
+              <label>MAC</label>
+              <div id="wifi_status_mac" class="value"></div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="two-columns">
+        <div class="container wifi_list">
+          <ul id="wifi_list" class="scanned_networks"></ul>
+          <div class="actions flex">
+            <div class="grow"></div>
+            <button id="refreshWifi">Refresh</button>
+          </div>
+        </div>
+        <div class="container wifi_details">
+          <ul>
+            <li>
+              <label>SSID</label>
+              <div class="value">
+                <input type="text" id="wifi_ssid" />
+              </div>
+            </li>
+            <li>
+              <label>Password</label>
+              <div class="value">
+                <input type="password" id="wifi_password" />
+              </div>
+            </li>
+          </ul>
+          <div class="actions flex">
+            <div class="grow"></div>
+            <button id="connectWifi">Connect</button>
+            <button id="forgetWifi">Forget</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <div class="ping" id="ping">
+    </div>
+  </footer>
+<script type="text/javascript" src="main.js"></script></body>
+
+</html>
