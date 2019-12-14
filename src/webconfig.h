@@ -91,6 +91,9 @@ public:
   const bool getAutoUpdate();
   const bool getMQTTActive();
 
+  boolean publish(const char *payload, boolean retained);
+  boolean publish(const char *topic, const char *payload, boolean retained);
+
   void update();
 
   ~WebConfig();

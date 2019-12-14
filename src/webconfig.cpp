@@ -10,7 +10,7 @@
 
 #include "../setup.h"
 
-#include "progmem.h"
+#include "cfg_progmem.h"
 
 #include "version.h"
 #include <FS.h>
@@ -229,17 +229,10 @@ void WebConfig::beginMQTT(ESP8266WebServer &server)
   });
 
   server.on("/mqtt/test", HTTP_POST, [&]() {
-    if (_mqttClient.connected())
-    {
-      char msg[32];
-      snprintf(msg, 50, "hello world #%x", millis());
-      Serial.print("Publish message: ");
-      Serial.println(msg);
-      _mqttClient.publish("outTopic", msg);
-      server.send(200, "application/json", R_SUCCESS);
-    }
-    else
-      server.send(200, "application/json", R_FAILED);
+    char msg[32];
+    snprintf(msg, 50, "hello world #%x\0", millis());
+    boolean result = publish(msg, false);
+    server.send(200, "application/json", result ? R_SUCCESS : R_FAILED);
   });
 }
 
@@ -714,6 +707,22 @@ void WebConfig::updateNewFirmware()
   }
   else
     Serial.println("server unreachable");
+}
+
+boolean WebConfig::publish(const char *payload, boolean retained)
+{
+  String topic = String(_cfg[opts::info_name]);
+  topic.concat("/");
+  topic.concat(_cfg[opts::mqtt_out_topic]);
+  return publish(topic.c_str(), payload, retained);
+}
+
+boolean WebConfig::publish(const char *topic, const char *payload, boolean retained)
+{
+  if (_mqttClient.connected())
+    return _mqttClient.publish(topic, payload, retained);
+  else
+    return false;
 }
 
 const String WebConfig::getConfig(const opts opt) { return _cfg[opt]; }
