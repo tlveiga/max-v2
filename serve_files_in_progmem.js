@@ -76,11 +76,12 @@ filedata.forEach(function (f) {
   fs.writeSync(outfd, "}\n");
 })
 
-fs.writeSync(outfd, "void setupServer(ESP8266WebServer &server) {\n");
+fs.writeSync(outfd, "void setupServer(ESP8266WebServer &server, const char *root = NULL) {\n");
+fs.writeSync(outfd, "  String sroot = root == NULL ? String(\"/\") : String(root);\n");
 filedata.forEach(function (f) {
   if (f.nohandler) return;
   let filename = f.filename.indexOf("NOEXT_") == 0 ? f.variable : f.filename;
-  fs.writeSync(outfd, "  server.on(\"/" + filename + "\", " + (f.post ? "HTTP_POST" : "HTTP_GET") + ", [&]() { handle_" + f.variable + "(server); });\n");
+  fs.writeSync(outfd, "  server.on((sroot + String(\"" + filename + "\")).c_str(), " + (f.post ? "HTTP_POST" : "HTTP_GET") + ", [&]() { handle_" + f.variable + "(server); });\n");
 });
 fs.writeSync(outfd, "}\n");
 

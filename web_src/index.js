@@ -278,7 +278,7 @@ function saveDeviceInfo() {
   });
 }
 function testMQTT() {
-  post("/mqtt/text").then(function (json) {
+  post("/mqtt/test").then(function (json) {
   });
 }
 function saveMQTT() {
@@ -314,7 +314,7 @@ function connectWifi() {
   };
   if (saved == null)
     network.password = getElementValue("wifi_password");
-  post(saved ? "/wifi/connect" : "wifi", network).then(function (json) {
+  post(saved ? "/wifi/connect" : "/wifi", network).then(function (json) {
     refreshWifi();
   });
 }

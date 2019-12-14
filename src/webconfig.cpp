@@ -25,7 +25,9 @@ struct saved_networks_struct
 
 WebConfig::WebConfig(const char *root)
 {
-  _root = String(root);
+  _root = String(root == NULL ? "/" : root);
+  if (_root.charAt(_root.length() - 1) != '/')
+    _root.concat("/");
 }
 
 void WebConfig::begin(ESP8266WebServer &server)
@@ -41,14 +43,9 @@ void WebConfig::begin(ESP8266WebServer &server)
   sprintf(info_id, "%X\0", ESP.getChipId());
   _cfg[opts::info_id] = String(info_id);
 
-  createIfNotFound("/index.html");
-  createIfNotFound("/main.js");
-
-  server.serveStatic((_root + String("/")).c_str(), SPIFFS, "/index.html");
-  server.serveStatic((_root + String("/main.js")).c_str(), SPIFFS, "/main.js");
-
   // PROGMEM init
-  setupServer(server);
+  setupServer(server, _root.c_str());
+  server.on(_root.c_str(), HTTP_GET, [&]() { handle_index_html(server); });
 
   beginInfo(server);
   beginMQTT(server);
@@ -56,20 +53,6 @@ void WebConfig::begin(ESP8266WebServer &server)
   beginWifi(server);
 
   server.on("/ping", HTTP_GET, [&]() { server.send(200); });
-
-  /* Web interface uploads */
-  server.on("/web-interface-upload/index", HTTP_POST,
-            [&]() { handleUploadResult(server); },
-            [&]() { handleFileUpload("/index.html", server); });
-
-  server.on("/web-interface-upload/main", HTTP_POST,
-            [&]() { handleUploadResult(server); },
-            [&]() { handleFileUpload("/main.js", server); });
-
-  server.on("/web-interface-upload/version", HTTP_POST,
-            [&]() { handleUploadResult(server); },
-            [&]() { handleFileUpload(UIVERSION, server); });
-  /* END Web interface uploads */
 
   server.on("/test", HTTP_GET, [&]() {
     FSInfo fs_info;
@@ -101,17 +84,6 @@ void WebConfig::beginInfo(ESP8266WebServer &server)
   const size_t capacity = JSON_OBJECT_SIZE(7) + 2048; // change to real values
   DynamicJsonDocument doc(capacity);
 
-  if (readJSONFile(UIVERSION, doc))
-  {
-    _cfg[opts::ui_version] = doc["version"].as<String>();
-    _cfg[opts::ui_date] = doc["date"].as<String>();
-  }
-
-  if (_cfg[opts::ui_version].length() == 0)
-    _cfg[opts::ui_version] = String("none");
-  if (_cfg[opts::ui_date].length() == 0)
-    _cfg[opts::ui_date] = String("0");
-
   if (readJSONFile(INFOFILE, doc))
   {
     _cfg[opts::info_name] = doc["name"].as<String>();
@@ -135,11 +107,9 @@ void WebConfig::beginInfo(ESP8266WebServer &server)
     char *buf = (char *)malloc(5120);
     sprintf(buf,
             "{\"id\":\"%s\",\"code\":\"%s\",\"name\":\"%s\",\"fw_version\":"
-            "\"%s\",\"ui_version\":\"%s\",\"ui_date\":%s, "
-            "\"update_server\":\"%s\",\"auto_update\":%s}",
+            "\"%s\",\"update_server\":\"%s\",\"auto_update\":%s}",
             _cfg[opts::info_id].c_str(), FWCODE, _cfg[opts::info_name].c_str(),
-            FWVERSION, _cfg[opts::ui_version].c_str(),
-            _cfg[opts::ui_date].c_str(), _cfg[opts::info_update_server].c_str(),
+            FWVERSION, _cfg[opts::info_update_server].c_str(),
             _info_auto_update ? "true" : "false");
     server.send(200, "application/json", buf);
     free(buf);
@@ -257,59 +227,20 @@ void WebConfig::beginMQTT(ESP8266WebServer &server)
     writeJSONFile(MQTTFILE, doc);
     server.send(200, "application/json", R_OK);
   });
-}
 
-void WebConfig::handleFileUpload(const char *filename,
-                                 ESP8266WebServer &server)
-{
-  HTTPUpload &upload = server.upload();
-  if (upload.status == UPLOAD_FILE_START)
-  {
-    String path = String(filename);
-    if (!path.startsWith("/"))
+  server.on("/mqtt/test", HTTP_POST, [&]() {
+    if (_mqttClient.connected())
     {
-      path = "/" + path;
-    }
-    _uploadFile = SPIFFS.open(path, "w");
-
-    if (_uploadFile)
-    {
-      Serial.println("upload begin started!");
-      _validSPIFFSUpdate = true;
+      char msg[32];
+      snprintf(msg, 50, "hello world #%x", millis());
+      Serial.print("Publish message: ");
+      Serial.println(msg);
+      _mqttClient.publish("outTopic", msg);
+      server.send(200, "application/json", R_SUCCESS);
     }
     else
-    {
-      Serial.println("upload begin failed!");
-      _validSPIFFSUpdate = false;
-    }
-  }
-  else if (upload.status == UPLOAD_FILE_WRITE)
-  {
-    if (_uploadFile)
-    {
-      _uploadFile.write(upload.buf, upload.currentSize);
-    }
-  }
-  else if (upload.status == UPLOAD_FILE_END)
-  {
-    if (_uploadFile)
-    {
-      _uploadFile.close();
-      Serial.print("handleFileUpload Size: ");
-      Serial.println(upload.totalSize);
-      if (upload.totalSize == 0)
-        _validSPIFFSUpdate = false;
-    }
-  }
-}
-
-void WebConfig::handleUploadResult(ESP8266WebServer &server)
-{
-  Serial.println(_validSPIFFSUpdate ? "OK" : "NOK");
-  if (_validSPIFFSUpdate)
-    server.send_P(200, PSTR("text/html"), NOHANDLER_upload_success_html);
-  else
-    server.send_P(200, PSTR("text/html"), NOHANDLER_upload_error_html);
+      server.send(200, "application/json", R_FAILED);
+  });
 }
 
 void WebConfig::beginStatus(ESP8266WebServer &server) {}
@@ -517,11 +448,6 @@ void WebConfig::update()
   }
 
   updateMqtt();
-
-  if (_lastmode == wifi_mode::sta && WiFi.status() == WL_CONNECTED)
-  {
-    ArduinoOTA.handle();
-  }
 }
 
 wifi_mode WebConfig::updateSTAMode()
@@ -550,12 +476,10 @@ wifi_mode WebConfig::updateSTAMode()
           connect(pair.first, it->second.password) == wifi_status::connected
               ? WL_CONNECTED
               : WL_DISCONNECTED;
+      it->second.lastupdate = millis();
       if (status == WL_CONNECTED)
         break;
     }
-
-    if (status == WL_CONNECTED)
-      _mqttClient.setServer(_cfg[opts::mqtt_server].c_str(), 1883);
   }
 
   return status == WL_CONNECTED ? wifi_mode::sta : wifi_mode::init;
@@ -587,14 +511,22 @@ void WebConfig::updateMqtt()
 {
   if (!_mqtt_active)
     return;
-  if (_lastmode == wifi_mode::sta && WiFi.status() == WL_CONNECTED && !_mqttClient.connected() && millis() - _lastMqttReconnect > MQTTRECONNECTTIMESPAN)
+  if (_lastmode == wifi_mode::sta && WiFi.status() == WL_CONNECTED &&
+      !_mqttClient.connected() &&
+      millis() - _lastMqttReconnect > MQTTRECONNECTTIMESPAN)
   {
+
+    _mqttClient.setServer(_cfg[opts::mqtt_server].c_str(), 1883);
+
     Serial.print("Connecting to MQTT server: ");
+    Serial.print(_cfg[opts::mqtt_server].c_str());
+    Serial.print(" ");
     String willTopic = String(_cfg[opts::info_name]);
     willTopic.concat("/offline");
     const char *willMessage = "goodbye";
 
-    if (_mqttClient.connect(_cfg[opts::info_name].c_str(), willTopic.c_str(), 1, false, willMessage))
+    if (_mqttClient.connect(_cfg[opts::info_name].c_str(), willTopic.c_str(), 1,
+                            false, willMessage))
     {
       Serial.println("connected");
       String helloTopic = String(_cfg[opts::info_name]);
@@ -699,57 +631,6 @@ std::list<SSID_RSSI_pair> WebConfig::getNetworksInRange()
   });
 
   return list;
-}
-
-String WebConfig::getBestNetwork()
-{
-  Serial.println("getBestNetwork");
-  if (_wifi_networks.size() == 0)
-    return "";
-
-  int32_t maxsignalfound = MINRSSILEVEL;
-  String best;
-  int n = WiFi.scanNetworks();
-  for (int i = 0; i < n; i++)
-  {
-    String ssid = WiFi.SSID(i);
-    std::map<String, network_status>::iterator it = _wifi_networks.find(ssid);
-    if (it != _wifi_networks.end() &&
-        it->second.status != wifi_status::failed)
-    {
-      int32_t rssi = WiFi.RSSI(i);
-      Serial.printf("%s %d %d\n", ssid.c_str(), rssi, it->second.status);
-      if (rssi > maxsignalfound)
-      {
-        best = ssid;
-        maxsignalfound = rssi;
-      }
-    }
-  }
-
-  Serial.print("Found ");
-  Serial.println(best);
-  return best;
-}
-
-wifi_status WebConfig::connectToBestNetwork()
-{
-  Serial.println("connectToBestNetwork");
-  String bestnetwork = getBestNetwork();
-  wifi_status status = wifi_status::failed;
-  while (bestnetwork.length() > 0)
-  {
-    std::map<String, network_status>::iterator it =
-        _wifi_networks.find(bestnetwork);
-    wifi_status status = connect(bestnetwork, it->second.password);
-    it->second.status = status;
-    it->second.lastupdate = millis();
-    if (status == wifi_status::connected)
-      break;
-    else
-      bestnetwork = getBestNetwork();
-  }
-  return status;
 }
 
 wifi_status WebConfig::connect(String ssid, String password)

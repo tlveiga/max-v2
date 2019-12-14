@@ -3,10 +3,10 @@
 
 #include <ESP8266WebServer.h>
 #include <FS.h>
+#include <PubSubClient.h>
 #include <list>
 #include <map>
 #include <utility>
-#include <PubSubClient.h>
 
 enum class opts : uint8_t
 {
@@ -16,8 +16,8 @@ enum class opts : uint8_t
   mqtt_server,
   mqtt_in_topic,
   mqtt_out_topic,
-  ui_version,
-  ui_date
+  mqtt_username,
+  mqtt_password
 };
 
 enum class wifi_mode : uint8_t
@@ -70,9 +70,6 @@ private:
   void beginStatus(ESP8266WebServer &server);
   void beginWifi(ESP8266WebServer &server);
 
-  void handleFileUpload(const char *filename, ESP8266WebServer &server);
-  void handleUploadResult(ESP8266WebServer &server);
-
   void createIfNotFound(const char *filename);
 
   wifi_mode updateSTAMode();
@@ -81,10 +78,6 @@ private:
 
   bool saveNetworks();
   std::list<SSID_RSSI_pair> getNetworksInRange();
-
-  String getBestNetwork();
-
-  wifi_status connectToBestNetwork();
   wifi_status connect(String ssid, String password);
 
 public:

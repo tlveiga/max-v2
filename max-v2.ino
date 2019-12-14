@@ -11,8 +11,8 @@
 #include <Adafruit_NeoPixel.h>
 
 ESP8266WebServer server(80);
-WebConfig setupServer;
 Adafruit_NeoPixel pixels(1, 4, NEO_GRB + NEO_KHZ800);
+WebConfig setupServer("/cfg");
 
 unsigned long last = 0;
 void setup()
@@ -43,15 +43,6 @@ void setup()
     ESP.restart();
   });
 
-  server.on("/mqtt/text", HTTP_POST, []() {
-    char msg[32];
-    snprintf(msg, 50, "hello world #%x", millis());
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    // mqttClient.publish("outTopic", msg);
-    server.send(200, "application/json", R_SUCCESS);
-  });
-
   setupServer.setMQTTCallback(
       [=](char *topic, uint8_t *message, unsigned int len) {
         if (len > 0)
@@ -68,8 +59,16 @@ void setup()
             pixels.setPixelColor(0, pixels.Color(150, 0, 0));
           }
           pixels.show();
-        }
-      });
+
+          Serial.print("Message arrived [");
+          Serial.print(topic);
+          Serial.print("] ");
+          for (int i = 0; i < len; i++)
+          {
+            Serial.print((char)message[i]);
+          }
+          Serial.println();
+        } });
 }
 
 void loop()

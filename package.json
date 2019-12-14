@@ -4,8 +4,8 @@
   "description": "",
   "main": "webpack.config.js",
   "scripts": {
-    "web": "node node_modules/webpack/bin/webpack.js",
-    "web-watch": "node node_modules/webpack/bin/webpack.js -w",
+    "web": "node node_modules/webpack/bin/webpack.js --env.production",
+    "web-watch": "node node_modules/webpack/bin/webpack.js -w --env.development",
     "progmem": "node serve_files_in_progmem.js"
   },
   "repository": {
