@@ -14,6 +14,7 @@
 
 #include "version.h"
 #include <FS.h>
+#include <ArduinoOTA.h>
 
 struct saved_networks_struct
 {
@@ -155,10 +156,57 @@ void WebConfig::beginInfo(ESP8266WebServer &server)
     _info_auto_update = doc["auto_update"].as<bool>();
 
     WiFi.hostname(_cfg[opts::info_name]);
+    ArduinoOTA.setHostname(_cfg[opts::info_name].c_str());
 
     writeJSONFile(INFOFILE, doc);
     server.send(200, "application/json", R_OK);
   });
+
+  /* OTA */
+  ArduinoOTA.onStart([]() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH)
+    {
+      type = "sketch";
+    }
+    else
+    { // U_FS
+      type = "filesystem";
+    }
+
+    // NOTE: if updating FS this would be the place to unmount FS using FS.end()
+    Serial.println("Start updating " + type);
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR)
+    {
+      Serial.println("Auth Failed");
+    }
+    else if (error == OTA_BEGIN_ERROR)
+    {
+      Serial.println("Begin Failed");
+    }
+    else if (error == OTA_CONNECT_ERROR)
+    {
+      Serial.println("Connect Failed");
+    }
+    else if (error == OTA_RECEIVE_ERROR)
+    {
+      Serial.println("Receive Failed");
+    }
+    else if (error == OTA_END_ERROR)
+    {
+      Serial.println("End Failed");
+    }
+  });
+  ArduinoOTA.begin();
 }
 void WebConfig::beginMQTT(ESP8266WebServer &server)
 {
@@ -293,6 +341,7 @@ void WebConfig::beginWifi(ESP8266WebServer &server)
                                       0};
 
   WiFi.hostname(_cfg[opts::info_name]);
+  ArduinoOTA.setHostname(_cfg[opts::info_name].c_str());
   _lastmode = _wifi_networks.size() > 0 ? wifi_mode::sta : wifi_mode::init;
 
   server.on("/wifi", HTTP_GET, [&]() {
@@ -467,7 +516,12 @@ void WebConfig::update()
     _lastFWCheck = millis();
   }
 
-  //updateMqtt();
+  updateMqtt();
+
+  if (_lastmode == wifi_mode::sta && WiFi.status() == WL_CONNECTED)
+  {
+    ArduinoOTA.handle();
+  }
 }
 
 wifi_mode WebConfig::updateSTAMode()

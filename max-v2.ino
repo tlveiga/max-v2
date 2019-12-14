@@ -8,15 +8,18 @@
 #include <FS.h>
 
 #include "src/webconfig.h"
+#include <Adafruit_NeoPixel.h>
 
 ESP8266WebServer server(80);
 WebConfig setupServer;
+Adafruit_NeoPixel pixels(1, 4, NEO_GRB + NEO_KHZ800);
 
 unsigned long last = 0;
 void setup()
 {
   Serial.begin(115200);
   pinMode(14, OUTPUT);
+
   Serial.println("Booting...");
 
   Serial.printf("Project: %s\nVersion: %s\n", FWCODE, FWVERSION);
@@ -25,6 +28,12 @@ void setup()
 
   server.begin();
   setupServer.begin(server);
+  pixels.begin();
+
+  delay(50);
+  digitalWrite(14, LOW);
+  pixels.setPixelColor(0, pixels.Color(150, 150, 150));
+  pixels.show();
 
   Serial.println(setupServer.getConfig(opts::mqtt_server).c_str());
 
@@ -46,7 +55,20 @@ void setup()
   setupServer.setMQTTCallback(
       [=](char *topic, uint8_t *message, unsigned int len) {
         if (len > 0)
+        {
+          Serial.print("Received message: ");
+          Serial.println(message[0]);
           digitalWrite(14, message[0] == '1' ? HIGH : LOW);
+          if (message[0] == '1')
+          {
+            pixels.setPixelColor(0, pixels.Color(0, 150, 0));
+          }
+          else
+          {
+            pixels.setPixelColor(0, pixels.Color(150, 0, 0));
+          }
+          pixels.show();
+        }
       });
 }
 
