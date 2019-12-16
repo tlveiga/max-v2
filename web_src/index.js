@@ -253,7 +253,7 @@ function checkNewVersion() {
     __newVersion = json;
     setElementHtml("availableFWVersion", json.fw_version);
 
-    var hasfwupdate = compareVersion(__info.fw_version, __newVersion.fw_version) > 1;
+    var hasfwupdate = compareVersion(__info.fw_version, __newVersion.fw_version) < 0;
     setUpdateClass("fw_version", hasfwupdate);
     setDisableValue("update", !hasfwupdate);
   });

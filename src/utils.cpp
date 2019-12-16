@@ -2,18 +2,21 @@
 #include "constants.h"
 #include <FS.h>
 
-bool readJSONFile(const char *filename, DynamicJsonDocument &json) {
+bool readJSONFile(const char *filename, DynamicJsonDocument &json)
+{
   Serial.print(F("Loading file: "));
   Serial.println(filename);
   File file = SPIFFS.open(filename, "r");
-  if (!file) {
+  if (!file)
+  {
     Serial.println(F("failed: open file"));
     return false;
   }
 
   size_t size = file.size();
 
-  if (size > MAXJSONFILESIZE) {
+  if (size > MAXJSONFILESIZE)
+  {
     Serial.println(F("failed: file too big"));
     file.close();
     return false;
@@ -29,7 +32,8 @@ bool readJSONFile(const char *filename, DynamicJsonDocument &json) {
       json, (const char *)buf); // the cast forces ArduinoJson to make a copy
   free(buf);
   file.close();
-  if (error) {
+  if (error)
+  {
     Serial.println(F("failed: deserializeJson"));
     Serial.println(error.c_str());
     return false;
@@ -37,12 +41,14 @@ bool readJSONFile(const char *filename, DynamicJsonDocument &json) {
   return true;
 };
 
-bool writeJSONFile(const char *filename, const DynamicJsonDocument json) {
+bool writeJSONFile(const char *filename, const DynamicJsonDocument json)
+{
   Serial.print(F("Saving file: "));
   Serial.println(filename);
 
   File file = SPIFFS.open(filename, "w");
-  if (!file) {
+  if (!file)
+  {
     Serial.println(F("failed: creating file"));
     return false;
   }
@@ -56,26 +62,52 @@ bool writeJSONFile(const char *filename, const DynamicJsonDocument json) {
   return false;
 };
 
-bool readJSONFromSPI(uint32_t addr, uint32_t size, DynamicJsonDocument &json) {
+bool readJSONFromSPI(uint32_t addr, uint32_t size, DynamicJsonDocument &json)
+{
   return false;
 }
 bool writeJSONToSPI(uint32_t addr, uint32_t size,
-                    const DynamicJsonDocument json) {
+                    const DynamicJsonDocument json)
+{
   return false;
 }
 
-bool writeFile(const char *filename, String str) {
+bool writeFile(const char *filename, String str)
+{
   Serial.print(F("Saving file: "));
   Serial.println(filename);
 
   File file = SPIFFS.open(filename, "w");
-  if (!file) {
+  if (!file)
+  {
     Serial.println(F("failed: creating file"));
     return false;
   }
   Serial.printf("Writing %d bytes", str.length());
 
   file.close();
+
+  return true;
+}
+
+bool createIfNotFound(const char *filename)
+{
+  if (!SPIFFS.exists(filename))
+  {
+    Serial.print(filename);
+    Serial.println(" not found.");
+    File file = SPIFFS.open(filename, "w");
+    if (!file)
+    {
+      Serial.println(F("failed: creating file"));
+      return false;
+    }
+    else
+    {
+      file.close();
+      return true;
+    }
+  }
 
   return true;
 }

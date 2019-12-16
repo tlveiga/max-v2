@@ -401,20 +401,6 @@ void WebConfig::beginWifi(ESP8266WebServer &server)
   });
 }
 
-void WebConfig::createIfNotFound(const char *filename)
-{
-  if (!SPIFFS.exists(filename))
-  {
-    Serial.print(filename);
-    Serial.println(" not found.");
-    File file = SPIFFS.open(filename, "w");
-    if (!file)
-      Serial.println(F("failed: creating file"));
-    else
-      file.close();
-  }
-}
-
 void WebConfig::update()
 {
   // FALTA VERIFICAR SE HÁ ALGUEM A PINGAR O SITE

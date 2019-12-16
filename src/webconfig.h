@@ -70,8 +70,6 @@ private:
   void beginStatus(ESP8266WebServer &server);
   void beginWifi(ESP8266WebServer &server);
 
-  void createIfNotFound(const char *filename);
-
   wifi_mode updateSTAMode();
   wifi_mode updateAPMode();
   void updateMqtt();

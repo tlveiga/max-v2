@@ -560,8 +560,9 @@
             cb(httpRequest.responseText);
           }
         }
-      } || null;
+      } || null
       httpRequest.open(method || 'POST', "http://" + web_url + "/" + url);
+      httpRequest.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
       httpRequest.send(data || null);
     }
 

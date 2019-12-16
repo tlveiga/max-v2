@@ -2,7 +2,7 @@
 #define __CONSTANTS_H__
 
 #define FWCODE "max"
-#define FWVERSION "1.1.1"
+#define FWVERSION "0.1.0"
 
 // FILES
 #define INFOFILE "/info.json"
