@@ -1,8 +1,8 @@
 #ifndef __CONSTANTS_H__
 #define __CONSTANTS_H__
 
-#define FWCODE "max"
-#define FWVERSION "0.1.0"
+#define FWCODE "leena"
+#define FWVERSION "1.1.1"
 
 // FILES
 #define INFOFILE "/info.json"

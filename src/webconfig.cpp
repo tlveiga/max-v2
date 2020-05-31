@@ -662,26 +662,9 @@ void WebConfig::updateNewFirmware()
       if (my_version < server_version)
       {
         String filename = doc["fw_file"].as<String>();
-        ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
         Serial.print("FW update available ");
         Serial.println(url + filename);
-        t_httpUpdate_return ret = ESPhttpUpdate.update(url + filename);
-        switch (ret)
-        {
-        case HTTP_UPDATE_FAILED:
-          Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n",
-                        ESPhttpUpdate.getLastError(),
-                        ESPhttpUpdate.getLastErrorString().c_str());
-          break;
-
-        case HTTP_UPDATE_NO_UPDATES:
-          Serial.println("HTTP_UPDATE_NO_UPDATES");
-          break;
-
-        case HTTP_UPDATE_OK:
-          Serial.println("HTTP_UPDATE_OK");
-          break;
-        }
+        updateNewFirmware(url + filename);
       }
       else
       {
@@ -693,6 +676,30 @@ void WebConfig::updateNewFirmware()
   }
   else
     Serial.println("server unreachable");
+}
+
+void WebConfig::updateNewFirmware(String url)
+{
+  Serial.print("Updating FW with ");
+  Serial.println(url);
+  ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+  t_httpUpdate_return ret = ESPhttpUpdate.update(url);
+  switch (ret)
+  {
+  case HTTP_UPDATE_FAILED:
+    Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n",
+                  ESPhttpUpdate.getLastError(),
+                  ESPhttpUpdate.getLastErrorString().c_str());
+    break;
+
+  case HTTP_UPDATE_NO_UPDATES:
+    Serial.println("HTTP_UPDATE_NO_UPDATES");
+    break;
+
+  case HTTP_UPDATE_OK:
+    Serial.println("HTTP_UPDATE_OK");
+    break;
+  }
 }
 
 boolean WebConfig::publish(const char *payload, boolean retained)

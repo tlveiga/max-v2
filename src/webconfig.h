@@ -82,6 +82,7 @@ public:
   WebConfig(const char *root = NULL);
   void begin(ESP8266WebServer &server);
   void updateNewFirmware();
+  void updateNewFirmware(String url);
 
   void setMQTTCallback(MQTT_CALLBACK_SIGNATURE);
 
