@@ -1,8 +1,8 @@
 #ifndef __CONSTANTS_H__
 #define __CONSTANTS_H__
 
-#define FWCODE "leena"
-#define FWVERSION "1.1.1"
+#define FWCODE "galaxy"
+#define FWVERSION "1.0.0"
 
 // FILES
 #define INFOFILE "/info.json"
@@ -10,7 +10,7 @@
 #define WIFIFILE "/wifi.json"
 
 #define DEFAULTUPDATESERVER "http://tlv-ubuntu.westeurope.cloudapp.azure.com/fw"
-#define DEFAULTMQTTSERVER "tlv-ubuntu.westeurope.cloudapp.azure.com"
+#define DEFAULTMQTTSERVER "192.168.1.77"
 
 #define MAXJSONFILESIZE 1024
 
